@@ -12,7 +12,7 @@ wget https://github.com/maicong/LNMP/archive/master.zip
 
 unzip master.zip
 
-cd master
+cd LNMP-master
 
 bash lnmp.sh 2>&1 | tee lnmp.log
 ```
