@@ -1,205 +1,282 @@
 #!/bin/bash
 #
-# CentOS yum install: Nginx 1.8.x/1.9.x + MySQL 5.x + PHP 5.6.x/7.x
-#
-# https://maicong.me/2015-09-17-mc-lnmp.html
-#
-# Usage: bash lnmp.sh 2>&1 | tee lnmp.log
+## CentOS 7 YUM Installation: Nginx 1.8.x/1.9.x + MySQL 5.x + PHP 5.6.x/7.x
+## https://github.com/maicong/LNMP
+## Usage: bash lnmp.sh
 
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin;
 clear;
 
-# Sanity check
+## 检查 root 权限
 [ $(id -g) != "0" ] && die "Script must be run as root.";
 
-echo "#";
-echo "# CentOS yum install: Nginx 1.8.x/1.9.x + MySQL 5.x + PHP 5.6.x/7.x";
-echo "#";
-echo "# https://maicong.me/2015-09-17-mc-lnmp.html";
-echo "#";
-echo "# Usage: bash lnmp.sh 2>&1 | tee lnmp.log";
-echo "#";
+echo "================================================================";
+echo "CentOS 7 YUM Installation: Nginx 1.8.x/1.9.x + MySQL 5.x + PHP 5.6.x/7.x";
+echo "https://github.com/maicong/LNMP";
+echo "Usage: bash lnmp.sh";
+echo "================================================================";
 
-mysqlV='';
-phpV='';
-nginxV='';
+lnmpDo="";
+mysqlV="";
+phpV="";
+nginxV="";
+startDate='';
+startDateSecond='';
+ipAddress=`ip addr | egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | egrep -v "^192\.168|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-2]\.|^10\.|^127\.|^255\." | head -n 1`;
 
-echo "[Notice] Please select MySQL Version: ";
-select mysqlV in 'MySQL-5.5' 'MySQL-5.6' 'MySQL-5.7-Dev' 'Exit'; do
-    break;
-done;
+## 确认安装
+function ConfirmInstall() {
+    echo "[Notice] Please select: ";
+    select lnmpDo in "Install" "Uninstall" "Upgrade" "Exit"; do break; done;
+    if [ "$lnmpDo" == "Uninstall" ]; then
+        read -p '[Notice] Did you backup data? (y/n) : ' confirmYN;
+        [ "$confirmYN" != 'y' ] && exit;
+        echo "[Notice] Uninstalling... ";
+        systemctl stop mysqld.service;
+        systemctl stop php-fpm.service;
+        systemctl stop nginx.service;
+        yum remove -y epel* epel-* mysql* mysql-* httpd* httpd-* nginx* nginx-* php* php-* remi* remi-*;
+        rm -rf /etc/nginx;
+        rm -rf /etc/my.cnf.d;
+        rm -rf /etc/php*;
+        rm -rf /etc/my.cnf*;
+        rm -rf /home/userdata;
+        rm -rf /home/wwwroot;
+        ps -ef | grep "www" | awk '{ print $2 }' | uniq | xargs kill -9;
+        userdel -r www;
+        groupdel www;
+        yum clean all;
+        exit;
+    elif [ "$lnmpDo" == "Upgrade" ]; then
+        echo "[Notice] Upgrading... ";
+        yum upgrade;
+        exit;
+    elif [ "$lnmpDo" == "Install" ]; then
+        selectMySQL;
+        selectPHP;
+        selectNginx;
+        CloseSelinux;
+        InstallReady;
+        InstallService;
+        ConfigService;
+        StartService;
+    elif [ "$lnmpDo" == "Exit" ]; then
+        exit;
+    else  
+        ConfirmInstall;
+    fi;
+}
 
-echo "[Notice] Please select PHP Version: ";
-select phpV in 'PHP-5.5' 'PHP-5.6' 'PHP-7.0-RC' 'Exit'; do
-    break;
-done;
+## 选择 MySQL 版本
+function selectMySQL() {
+    echo "[Notice] Please select MySQL Version: ";
+    select mysqlV in "MySQL-5.5" "MySQL-5.6" "MySQL-5.7-Dev" "Exit"; do
+        break;
+    done;
 
-echo "[Notice] Please select Nginx Version: ";
-select nginxV in 'Nginx-1.8' 'Nginx-1.9-Dev' 'Exit'; do
-    break;
-done;
+    [ "$mysqlV" == "Exit" ] && exit;
 
-echo "[Notice] Synchronize the local time... ";
-yum install -y ntp;
-rm -rf /etc/localtime;
-ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime;
-ntpdate -u pool.ntp.org;
-systemctl enable ntpd.service;
-systemctl start ntpd.service;
+    if [ "$mysqlV" != "MySQL-5.5" ] && [ "$mysqlV" != "MySQL-5.6" ] && [ "$mysqlV" != "MySQL-5.7-Dev" ] && [ "$mysqlV" != "Exit" ]; then
+        selectMySQL;
+    fi;
+}
 
-StartDate=$(date);
-StartDateSecond=$(date +%s);
-echo "Start time: ${StartDate}";
+## 选择 PHP 版本
+function selectPHP() {
+    echo "[Notice] Please select PHP Version: ";
+    select phpV in "PHP-5.5" "PHP-5.6" "PHP-7.0-RC" "Exit"; do
+        break;
+    done;
 
-echo "[Notice] Removing some packages... ";
-yum remove -y epel* epel-* mysql* mysql-* httpd* httpd-* nginx* nginx-* php* php-* remi* remi-*;
+    [ "$phpV" == "Exit" ] && exit;
 
-time=`date +%s`;
-mkdir -p /etc/yum.repos.d/bak.$time/;
-mv -bfu /etc/yum.repos.d/{epel*,mysql*,remi*,nginx*} /etc/yum.repos.d/bak.$time/ >& /dev/null;
+    if [ "$phpV" != "PHP-5.5" ] && [ "$phpV" != "PHP-5.6" ] && [ "$phpV" != "PHP-7.0-RC" ] && [ "$phpV" != "Exit" ]; then
+        selectPHP;
+    fi;
+}
 
-echo "[Notice] Make yum cache ... ";
-yum clean all;
-rpm --rebuilddb;
-yum makecache;
+## 选择 Nginx 版本
+function selectNginx() {
+    echo "[Notice] Please select Nginx Version: ";
+    select nginxV in "Nginx-1.8" "Nginx-1.9-Dev" "Exit"; do
+        break;
+    done;
 
-yum install -y epel-release;
+    [ "$nginxV" == "Exit" ] && exit;
 
-rpm --import mysql_pubkey.asc;
-rpm --import http://rpms.remirepo.net/RPM-GPG-KEY-remi;
-rpm --import http://nginx.org/packages/keys/nginx_signing.key;
+    if [ "$nginxV" != "Nginx-1.8" ] && [ "$nginxV" != "Nginx-1.9-Dev" ] && [ "$nginxV" != "Exit" ]; then
+        selectNginx;
+    fi;
+}
 
-rpm -Uvh http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm;
-rpm -Uvh http://remi.mirrors.arminco.com/enterprise/remi-release-7.rpm;
-rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm;
+## 关闭并禁用 selinux
+function CloseSelinux() {
+    [ -s /etc/selinux/config ] && sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config;
+    setenforce 0 >/dev/null 2>&1;
+}
 
-mysqlRepo=/etc/yum.repos.d/mysql-community.repo;
+## 准备安装
+function InstallReady() {
+    yum_repos_s=`ls /etc/yum.repos.d | grep .repo | wc -l`;
+    if [ "$yum_repos_s" == '0' ]; then
+        wget -c -P /etc/yum.repos.d --tries=3 http://mirrors.aliyun.com/repo/Centos-7.repo;
+        yum clean all;
+        yum makecache;
+    fi;
 
-if [ "$mysqlV" == 'MySQL-5.5' ]; then
-    sed -i '/yum\/mysql\-5\.5/{n;s/enabled=0/enabled=1/g}' $mysqlRepo;
-    sed -i '/yum\/mysql\-5\.6/{n;s/enabled=1/enabled=0/g}' $mysqlRepo;
-    sed -i '/yum\/mysql\-5\.7/{n;s/enabled=1/enabled=0/g}' $mysqlRepo;
-elif [ "$mysqlV" == 'MySQL-5.6' ]; then
-    sed -i '/yum\/mysql\-5\.5/{n;s/enabled=1/enabled=0/g}' $mysqlRepo;
-    sed -i '/yum\/mysql\-5\.6/{n;s/enabled=0/enabled=1/g}' $mysqlRepo;
-    sed -i '/yum\/mysql\-5\.7/{n;s/enabled=1/enabled=0/g}' $mysqlRepo;
-elif [ "$mysqlV" == 'MySQL-5.7-Dev' ]; then
-    sed -i '/yum\/mysql\-5\.5/{n;s/enabled=1/enabled=0/g}' $mysqlRepo;
-    sed -i '/yum\/mysql\-5\.6/{n;s/enabled=1/enabled=0/g}' $mysqlRepo;
-    sed -i '/yum\/mysql\-5\.7/{n;s/enabled=0/enabled=1/g}' $mysqlRepo;
-fi;
+    yum install -y ntp;
+    ntpdate -u pool.ntp.org;
+    startDate=$(date);
+    startDateSecond=$(date +%s);
+    echo "Start time: ${startDate}";
+    
+    rm -rf /etc/localtime;
+    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime;
 
-remiRepo=/etc/yum.repos.d/remi.repo;
-remi7Repo=/etc/yum.repos.d/remi-php70.repo;
+    time=`date +%s`;
+    mkdir -p /etc/yum.repos.d/bak.$time/;
+    mv -bfu /etc/yum.repos.d/{epel*,mysql*,remi*,nginx*} /etc/yum.repos.d/bak.$time/ >& /dev/null;
 
-sed -i '/remi\/mirror/{n;s/enabled=0/enabled=1/g}' /etc/yum.repos.d/remi.repo;
-sed -i '/test\/mirror/{n;n;s/enabled=0/enabled=1/g}' /etc/yum.repos.d/remi.repo;
+    yum upgrade -y;
+}
 
-if [ "$phpV" == 'PHP-5.5' ]; then
-    sed -i '/php55\/mirror/{n;n;s/enabled=0/enabled=1/g}' $remiRepo;
-    sed -i '/php56\/mirror/{n;n;s/enabled=1/enabled=0/g}' $remiRepo;
-    sed -i '/php70\/mirror/{n;s/enabled=1/enabled=0/g}' $remi7Repo;
-elif [ "$phpV" == 'PHP-5.6' ]; then
-    sed -i '/php55\/mirror/{n;n;s/enabled=1/enabled=0/g}' $remiRepo;
-    sed -i '/php56\/mirror/{n;n;s/enabled=0/enabled=1/g}' $remiRepo;
-    sed -i '/php70\/mirror/{n;s/enabled=1/enabled=0/g}' $remi7Repo;
-elif [ "$phpV" == 'PHP-7.0-RC' ]; then
-    sed -i '/php55\/mirror/{n;n;s/enabled=1/enabled=0/g}' $remiRepo;
-    sed -i '/php56\/mirror/{n;n;s/enabled=1/enabled=0/g}' $remiRepo;
-    sed -i '/php70\/mirror/{n;s/enabled=0/enabled=1/g}' $remi7Repo;
-fi;
+## 安装服务
+function InstallService() {
+    echo "[Notice] YUM install ... ";
+    yum install -y epel-release;
 
-nginxRepo=/etc/yum.repos.d/nginx.repo;
+    rpm --import mysql_pubkey.asc;
+    rpm --import http://rpms.remirepo.net/RPM-GPG-KEY-remi;
+    rpm --import http://nginx.org/packages/keys/nginx_signing.key;
 
-if [ "$nginxV" == 'Nginx-1.8' ]; then
-    sed -i 's/packages\/mainline\/centos/packages\/centos/g' $nginxRepo;
-elif [ "$nginxV" == 'Nginx-1.9-Dev' ]; then
-    sed -i 's/packages\/centos/packages\/mainline\/centos/g' $nginxRepo;
-fi;
+    rpm -Uvh http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm;
+    rpm -Uvh http://remi.mirrors.arminco.com/enterprise/remi-release-7.rpm;
+    rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm;
 
-yum clean all;
-rpm --rebuilddb;
-yum makecache;
-yum upgrade -y;
+    mysqlRepo=/etc/yum.repos.d/mysql-community.repo;
+    if [ "$mysqlV" == "MySQL-5.5" ]; then
+        sed -i "/yum\/mysql\-5\.5/{n;s/enabled=0/enabled=1/g}" $mysqlRepo;
+        sed -i "/yum\/mysql\-5\.6/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
+        sed -i "/yum\/mysql\-5\.7/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
+    elif [ "$mysqlV" == "MySQL-5.6" ]; then
+        sed -i "/yum\/mysql\-5\.5/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
+        sed -i "/yum\/mysql\-5\.6/{n;s/enabled=0/enabled=1/g}" $mysqlRepo;
+        sed -i "/yum\/mysql\-5\.7/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
+    elif [ "$mysqlV" == "MySQL-5.7-Dev" ]; then
+        sed -i "/yum\/mysql\-5\.5/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
+        sed -i "/yum\/mysql\-5\.6/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
+        sed -i "/yum\/mysql\-5\.7/{n;s/enabled=0/enabled=1/g}" $mysqlRepo;
+    fi;
 
-echo "[Notice] Disabled SELINUX... ";
+    phpRepo=/etc/yum.repos.d/remi.repo;
+    php7Repo=/etc/yum.repos.d/remi-php70.repo;
 
-sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config;
-setenforce 0 >/dev/null 2>&1;
+    sed -i "/remi\/mirror/{n;s/enabled=0/enabled=1/g}" /etc/yum.repos.d/remi.repo;
+    sed -i "/test\/mirror/{n;n;s/enabled=0/enabled=1/g}" /etc/yum.repos.d/remi.repo;
 
-echo "[Notice] Installing some packages... ";
+    if [ "$phpV" == "PHP-5.5" ]; then
+        sed -i "/php55\/mirror/{n;n;s/enabled=0/enabled=1/g}" $phpRepo;
+        sed -i "/php56\/mirror/{n;n;s/enabled=1/enabled=0/g}" $phpRepo;
+        sed -i "/php70\/mirror/{n;s/enabled=1/enabled=0/g}" $php7Repo;
+    elif [ "$phpV" == "PHP-5.6" ]; then
+        sed -i "/php55\/mirror/{n;n;s/enabled=1/enabled=0/g}" $phpRepo;
+        sed -i "/php56\/mirror/{n;n;s/enabled=0/enabled=1/g}" $phpRepo;
+        sed -i "/php70\/mirror/{n;s/enabled=1/enabled=0/g}" $php7Repo;
+    elif [ "$phpV" == "PHP-7.0-RC" ]; then
+        sed -i "/php55\/mirror/{n;n;s/enabled=1/enabled=0/g}" $phpRepo;
+        sed -i "/php56\/mirror/{n;n;s/enabled=1/enabled=0/g}" $phpRepo;
+        sed -i "/php70\/mirror/{n;s/enabled=0/enabled=1/g}" $php7Repo;
+    fi;
 
-yum install -y mysql-community-server nginx php php-bcmath php-fpm php-gd php-json php-mbstring php-mcrypt php-mysqlnd php-opcache php-pdo php-pdo_dblib php-pgsql php-recode php-snmp php-soap php-xml php-zip phpMyAdmin;
+    nginxRepo=/etc/yum.repos.d/nginx.repo;
+    if [ "$nginxV" == "Nginx-1.8" ]; then
+        sed -i "s/\/mainline//g" $nginxRepo;
+    elif [ "$nginxV" == "Nginx-1.9-Dev" ]; then
+        sed -i "s/packages/packages\/mainline/g" $nginxRepo;
+    fi;
 
-echo "[Notice] Move and copy some files... ";
+    yum clean all;
+    yum makecache;
 
-mkdir -p /etc/php-fpm.d.stop;
-mv -bfu /etc/php-fpm.d/* /etc/php-fpm.d.stop/;
-mv -bfu /etc/php.ini /etc/php.ini.bak;
-mv -bfu /etc/php-fpm.conf /etc/php-fpm.conf.bak;
+    yum install -y mysql-community-server nginx php php-bcmath php-fpm php-gd php-json php-mbstring php-mcrypt php-mysqlnd php-opcache php-pdo php-pdo_dblib php-pgsql php-recode php-snmp php-soap php-xml php-pecl-zip phpMyAdmin;
+}
 
-mkdir -p /etc/nginx/{conf.d.stop,rewrite,ssl};
-mv -bfu /etc/nginx/conf.d/* /etc/nginx/conf.d.stop/;
-mv -bfu /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak;
-mv -bfu /etc/nginx/fastcgi_params /etc/nginx/fastcgi_params.bak;
+## 配置服务
+function ConfigService() {
+    mkdir -p /etc/php-fpm.d.stop;
+    mv -bfu /etc/php-fpm.d/* /etc/php-fpm.d.stop/;
+    mv -bfu /etc/php.ini /etc/php.ini.bak;
 
-mkdir -p /etc/phpMyAdmin/oldbak;
-mv -bfu /etc/phpMyAdmin/config.inc.php /etc/phpMyAdmin/oldbak;
+    mkdir -p /etc/nginx/{conf.d.stop,rewrite,ssl};
+    mv -bfu /etc/nginx/conf.d/* /etc/nginx/conf.d.stop/;
+    mv -bfu /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak;
+    mv -bfu /etc/nginx/fastcgi_params /etc/nginx/fastcgi_params.bak;
 
-cp -a etc/* /etc/;
+    mkdir -p /etc/phpMyAdmin/oldbak;
+    mv -bfu /etc/phpMyAdmin/config.inc.php /etc/phpMyAdmin/oldbak;
 
-chmod +x /etc/rc.d/init.d/vhost;
+    cp -a etc/* /etc/;
 
-secret=`cat /dev/urandom | head -n 18 | head -c 18`;
-sed -i "s#739174021564331540#$secret#g" /etc/phpMyAdmin/config.inc.php;
+    chmod +x /etc/rc.d/init.d/vhost;
 
-mkdir -p /home/{wwwroot,userdata};
-mkdir -p /home/wwwroot/index/web;
-cp -a home/wwwroot/index /home/wwwroot/;
-cp -a /usr/share/phpMyAdmin /home/wwwroot/index/web/;
-rm -rf web/phpMyAdmin/doc/html;
-cp -a /usr/share/doc/phpMyAdmin-*/html /home/wwwroot/index/web/phpMyAdmin/doc/;
+    newHash=`echo -n $RANDOM  | md5sum | sed "s/ .*//" | cut -b -18`;
+    sed -i "s/739174021564331540/${newHash}/g" /etc/phpMyAdmin/config.inc.php;
 
-if [ `cat /etc/group | grep 'www'` -ne 0 ]; then
+    mkdir -p /home/{wwwroot,userdata};
+    mkdir -p /home/wwwroot/index/web;
+    cp -a home/wwwroot/index /home/wwwroot/;
+    cp -a /usr/share/phpMyAdmin /home/wwwroot/index/web/;
+    rm -rf /home/wwwroot/index/web/phpMyAdmin/doc/html;
+    cp -a /usr/share/doc/phpMyAdmin-*/html /home/wwwroot/index/web/phpMyAdmin/doc/;
+
     groupadd www;
-fi;    
-if [ `cat /etc/passwd | grep 'www'` -ne 0 ]; then
     useradd -m -s /sbin/nologin -g www www;
-fi;
 
-chown www:www -R /home/wwwroot;
-chown mysql:mysql -R /home/userdata;
+    chown www:www -R /home/wwwroot;
+    chown mysql:mysql -R /home/userdata;
+}
 
-echo "[Notice] Start LNMP service... ";
+## 启动服务
+function StartService() {
+    systemctl enable mysqld.service;
+    systemctl enable php-fpm.service;
+    systemctl enable nginx.service;
 
-systemctl start mysqld.service;
-systemctl start php-fpm.service;
-systemctl start nginx.service;
+    firewall-cmd --permanent --zone=public --add-service=http;
+    firewall-cmd --permanent --zone=public --add-service=https;
+    firewall-cmd --reload;
 
-systemctl enable mysqld.service;
-systemctl enable php-fpm.service;
-systemctl enable nginx.service;
+    systemctl start mysqld.service;
+    systemctl start php-fpm.service;
+    systemctl start nginx.service;
 
-firewall-cmd --permanent --zone=public --add-service=http;
-firewall-cmd --permanent --zone=public --add-service=https;
-firewall-cmd --reload;
+    InstallCompleted;
 
-echo "[Notice] MySQL secure installation... ";
+    echo -e "\n\n\033[42m mysql secure installation \033[0m";
+    mysql_secure_installation;
+}
 
-mysql_secure_installation;
+## 安装完成
+function InstallCompleted() {
+    if [ -f "/usr/sbin/mysqld" ] && [ -f "/usr/sbin/php-fpm" ] && [ -f "/usr/sbin/nginx" ]; then
+        echo "================================================================";
+        echo -e "\033[42m [LNMP] Install completed. \033[0m";
+        echo -e "\033[34m WebSite: \033[0m http://$ipAddress";
+        echo -e "\033[34m WebDir: \033[0m /home/wwwroot/";
+        echo -e "\033[34m Nginx: \033[0m /etc/nginx/";
+        echo -e "\033[34m PHP: \033[0m /etc/php-fpm.d/";
+        echo -e "\033[34m MySQL Data: \033[0m /home/userdata/";
+        echo -e "\033[34m MySQL User: \033[0m root";
+        echo -e "\033[34m MySQL Password: \033[0m <↓↓ mysql secure installation ↓↓>";
+        echo -e "\033[34m Host Management: \033[0m service vhost (start,stop,list,add,edit,del,exit) <domain> <server_name> <index_name> <rewrite_file> <host_subdirectory>";
+        echo "Start time: $startDate";
+        echo "Completion time: $(date) (Use: $[($(date +%s)-startDateSecond)/60] minute)";
+        echo "More help please visit: https://maicong.me/2015-09-17-mc-lnmp.html";
+        echo "================================================================";
+    else
+        echo -e "\033[41m [LNMP] Sorry, Install Failed. \033[0m";
+        echo "Please contact us: https://github.com/maicong/LNMP/issues";
+    fi;
+}
 
-echo "########################################";
-echo "LNMP install completed.";
-echo "WebSite: http://$ipAddr";
-echo "WebDir: /home/wwwroot/";
-echo "Nginx: /etc/nginx/";
-echo "PHP: /etc/php-fpm.d/";
-echo 'MySQL Data: /home/userdata/';
-echo "MySQL User: root";
-echo "MySQL Password: ";
-echo "Host: service vhost (start,stop,list,add,edit,del,exit) <domain> <server_name> <index_name> <rewrite_file> <host_subdirectory>";
-echo "Upgrade : yum upgrade -y";
-echo "Start time: $StartDate";
-echo "Completion time: $(date) (Use: $[($(date +%s)-StartDateSecond)/60] minute)";
-echo "More help please visit: https://maicong.me/2015-09-17-mc-lnmp.html";
-echo ""########################################";";
+## 安装
+ConfirmInstall;
