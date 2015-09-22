@@ -3,6 +3,26 @@ CentOS 7 YUM 安装 LNMP 环境
 
 CentOS 7 YUM Installation: Nginx 1.8/1.9 + MySQL 5.5/5.6/5.7 + PHP 5.5/5.6/7.0
 
+## 主要目录
+
+站点文件存放目录： `/home/wwwroot/`
+
+备份文件存放目录： `/home/backup/`
+
+MySQL 文件存放目录： `/home/userdata/`
+
+MySQL 配置文件目录： `/etc/my.cnf.d/`
+
+Nginx 启用站点目录：`/etc/nginx/conf.d/`
+
+Nginx 停用站点目录：`/etc/nginx/conf.d.stop/`
+
+PHP 启用站点目录：`/etc/php-fpm.d/`
+
+PHP 停用站点目录：`/etc/php-fpm.d.stop/`
+
+phpMyAdmin 配置文件目录： `/etc/phpMyAdmin/`
+
 ## 安装
 
 ![](http://ww4.sinaimg.cn/large/67f51f75gw1ewbbw5zog8j20gt0f0tbn.jpg)
