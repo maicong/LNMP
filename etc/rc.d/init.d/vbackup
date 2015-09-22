@@ -1,0 +1,56 @@
+#!/bin/bash
+#
+## Backup LNMP data
+##
+## CentOS 7 YUM Installation: Nginx 1.8/1.9 + MySQL 5.5/5.6/5.7 + PHP 5.5/5.6/7.0
+## https://github.com/maicong/LNMP
+## Usage: service vbackup (start,list,del) <delete name.tar.gz>
+
+# Sanity check
+[ $(id -g) != "0" ] && die "Script must be run as root.";
+
+echo "Please loading...";
+DateTag=`hostname`-`date +%Y%m%d-%H%M%S`;
+
+if [ "$*" != '' ]; then
+    selected=$1;
+    backup=$2;
+else
+    echo "Host Management please select: (1~7)"
+    select selected in 'start' 'list' 'del' 'exit'; do
+        break;
+    done;
+fi;
+
+if [ "$selected" == 'start' ]; then
+
+    [ ! -f "/usr/bin/rsync" ] && yum install -y rsync;
+    mkdir -p /home/backup/$DateTag/;
+    cd /home/backup/$DateTag/;
+    mkdir -p {etc,home/wwwroot};
+    cp -a /etc/php* ./etc;
+    cp -a /etc/my* ./etc;
+    [ -d /etc/nginx/ ] && cp -a /etc/nginx/ ./etc
+    [ -d /home/userdata/ ] && cp -a /home/userdata/ ./home;
+    [ -d /home/wwwroot/ ] && rsync -aqP --exclude=phpMyAdmin /home/wwwroot/ ./home/wwwroot;
+    cd /home/backup/;
+    tar -h -zcvf /home/backup/$DateTag.tar.gz ./$DateTag;
+    rm -rf /home/backup/$DateTag;
+    echo "[OK] successfully backup $DateTag";
+    exit;
+elif [ "$selected" == 'list' ]; then
+
+    for line in `ls /home/backup/ | egrep *.tar.gz`; do
+        echo $line;
+    done;
+    exit;
+elif [ "$selected" == 'del' ]; then
+    if [ "$backup" == '' ]; then
+        read -p "[Notice] deleted backup name:" backup;
+        [ "$backup" == '' ] && echo '[error] empty backup name' && exit 1;
+        service vbackup del $backup;
+        exit 0;
+    fi;
+    [ ! -f /home/backup/$backup ] && echo "[Error] $backup not exist!" && exit 1;
+    rm -rf /home/backup/$backup && echo "[OK] successfully delete $backup";
+fi;

@@ -1,12 +1,10 @@
 #!/bin/bash
 #
-# Create a new Nginx virtual host
-#
-# https://maicong.me/2015-09-15-mc-lnmp.html
-#
-# Usage: service vhost (start,stop,list,add,edit,del,exit) <domain> <server_name> <index_name> <rewrite_file> <host_subdirectory>
-
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin;
+## Create a new Nginx virtual host
+##
+## CentOS 7 YUM Installation: Nginx 1.8/1.9 + MySQL 5.5/5.6/5.7 + PHP 5.5/5.6/7.0
+## https://github.com/maicong/LNMP
+## Usage: service vhost (start,stop,list,add,edit,del,exit) <domain> <server_name> <index_name> <rewrite_file> <host_subdirectory>
 
 # Sanity check
 [ $(id -g) != "0" ] && die "Script must be run as root.";

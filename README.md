@@ -1,7 +1,7 @@
 CentOS 7 YUM 安装 LNMP 环境
 =======
 
-CentOS 7 YUM Installation: Nginx 1.8.x/1.9.x + MySQL 5.x + PHP 5.6.x/7.x
+CentOS 7 YUM Installation: Nginx 1.8/1.9 + MySQL 5.5/5.6/5.7 + PHP 5.5/5.6/7.0
 
 ## 安装
 
@@ -90,6 +90,43 @@ service vhost del domain
 
 ```
 service vhost list
+```
+
+## 备份
+
+```
+service vbackup (start,list,del) <delete name.tar.gz>
+```
+
+#### 参数说明
+
+ - `start` 添加
+
+ - `list` 列出
+
+ - `del` 删除
+
+#### 参数示例
+
+添加一个新的备份
+    
+```
+service vbackup start
+
+```
+
+列出备份文件
+    
+```
+service vbackup list
+
+```
+
+删除一个备份
+    
+```
+service vbackup del name.tar.gz
+
 ```
 
 ## 协议

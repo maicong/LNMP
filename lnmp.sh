@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-## CentOS 7 YUM Installation: Nginx 1.8.x/1.9.x + MySQL 5.x + PHP 5.6.x/7.x
+## CentOS 7 YUM Installation: Nginx 1.8/1.9 + MySQL 5.5/5.6/5.7 + PHP 5.5/5.6/7.0
 ## https://github.com/maicong/LNMP
 ## Usage: bash lnmp.sh
 
@@ -10,7 +10,7 @@ clear;
 [ $(id -g) != "0" ] && die "Script must be run as root.";
 
 echo "================================================================";
-echo "CentOS 7 YUM Installation: Nginx 1.8.x/1.9.x + MySQL 5.x + PHP 5.6.x/7.x";
+echo "CentOS 7 YUM Installation: Nginx 1.8/1.9 + MySQL 5.5/5.6/5.7 + PHP 5.5/5.6/7.0";
 echo "https://github.com/maicong/LNMP";
 echo "Usage: bash lnmp.sh";
 echo "================================================================";
@@ -216,6 +216,7 @@ function ConfigService() {
 
     cp -a etc/* /etc/;
 
+    chmod +x /etc/rc.d/init.d/vbackup;
     chmod +x /etc/rc.d/init.d/vhost;
 
     newHash=`echo -n $RANDOM  | md5sum | sed "s/ .*//" | cut -b -18`;
@@ -224,9 +225,9 @@ function ConfigService() {
     mkdir -p /home/{wwwroot,userdata};
     mkdir -p /home/wwwroot/index/web;
     cp -a home/wwwroot/index /home/wwwroot/;
-    cp -a /usr/share/phpMyAdmin /home/wwwroot/index/web/;
-    rm -rf /home/wwwroot/index/web/phpMyAdmin/doc/html;
-    cp -a /usr/share/doc/phpMyAdmin-*/html /home/wwwroot/index/web/phpMyAdmin/doc/;
+    cp -a /usr/share/phpMyAdmin /home/wwwroot/index/;
+    rm -rf /home/wwwroot/index/phpMyAdmin/doc/html;
+    cp -a /usr/share/doc/phpMyAdmin-*/html /home/wwwroot/index/phpMyAdmin/doc/;
 
     groupadd www;
     useradd -m -s /sbin/nologin -g www www;
