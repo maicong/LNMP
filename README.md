@@ -30,13 +30,9 @@ phpMyAdmin 配置文件目录： `/etc/phpMyAdmin/`
 ```
 yum install -y wget unzip
 
-wget https://github.com/maicong/LNMP/archive/master.zip
+wget https://github.com/maicong/LNMP/archive/master.zip && unzip master.zip
 
-unzip master.zip
-
-cd LNMP-master
-
-bash lnmp.sh
+cd LNMP-master && bash lnmp.sh
 
 # 输出到指定文件
 # bash lnmp.sh 2>&1 | tee lnmp.log
