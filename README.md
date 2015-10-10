@@ -28,7 +28,7 @@ phpMyAdmin 配置文件目录： `/etc/phpMyAdmin/`
 ![](http://ww4.sinaimg.cn/large/67f51f75gw1ewbbw5zog8j20gt0f0tbn.jpg)
 
 ```
-yum install -y unzip
+yum install -y wget unzip
 
 wget https://github.com/maicong/LNMP/archive/master.zip
 
