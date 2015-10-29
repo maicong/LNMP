@@ -170,8 +170,8 @@ function InstallService() {
     phpRepo=/etc/yum.repos.d/remi.repo;
     php7Repo=/etc/yum.repos.d/remi-php70.repo;
 
-    sed -i "/remi\/mirror/{n;s/enabled=0/enabled=1/g}" /etc/yum.repos.d/remi.repo;
-    sed -i "/test\/mirror/{n;n;s/enabled=0/enabled=1/g}" /etc/yum.repos.d/remi.repo;
+    sed -i "/remi\/mirror/{n;s/enabled=0/enabled=1/g}" $phpRepo;
+    sed -i "/test\/mirror/{n;n;s/enabled=0/enabled=1/g}" $phpRepo;
 
     if [ "$phpV" == "PHP-5.5" ]; then
         sed -i "/php55\/mirror/{n;n;s/enabled=0/enabled=1/g}" $phpRepo;
@@ -271,7 +271,7 @@ function InstallCompleted() {
         echo -e "\033[34m Host Management: \033[0m service vhost (start,stop,list,add,edit,del,exit) <domain> <server_name> <index_name> <rewrite_file> <host_subdirectory>";
         echo "Start time: $startDate";
         echo "Completion time: $(date) (Use: $[($(date +%s)-startDateSecond)/60] minute)";
-        echo "More help please visit: https://maicong.me/2015-09-17-mc-lnmp.html";
+        echo "More help please visit: https://maicong.me/2015-09-23-mc-lnmp.html";
         echo "================================================================";
     else
         echo -e "\033[41m [LNMP] Sorry, Install Failed. \033[0m";
