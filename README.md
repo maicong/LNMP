@@ -26,15 +26,19 @@ phpMyAdmin 配置： `/etc/phpMyAdmin/`
 ## 安装
 
 ```
+# 安装 wget 和 unzip
 yum install -y wget unzip
 
+# 下载安装包
 wget https://github.com/maicong/LNMP/archive/master.zip
 
+# 解压安装包
 unzip master.zip && cd LNMP-master
 
+# 执行安装命令
 bash lnmp.sh
 
-# 将 log 输出到文件
+# 如果想查看安装日志，可以将 log 输出到指定文件
 # bash lnmp.sh 2>&1 | tee lnmp.log
 ```
 
@@ -91,59 +95,46 @@ service vhost (start,stop,list,add,edit,del,exit) <domain> <server_name> <index_
 
  - `exit` 什么都不做
 
- - `&lt;domain&gt;` 标识名称，默认：`domain`
+ - `<domain>` 标识名称，默认：`domain`
 
- - `&lt;server_name&gt;` 域名列表，默认：`domain.com,www.domain.com`
+ - `<server_name>` 域名列表，默认：`domain.com,www.domain.com`
 
- - `&lt;index_name&gt;` 首页文件，默认：`index.html,index.htm,index.php`
+ - `<index_name>` 首页文件，默认：`index.html,index.htm,index.php`
 
- - `&lt;rewrite_file&gt;` 伪静态规则文件，保存在 `/etc/nginx/rewrite/`，默认：`nomal.conf`
+ - `<rewrite_file>` 伪静态规则文件，保存在 `/etc/nginx/rewrite/`，默认：`nomal.conf`
 
- - `&lt;host_subdirectory&gt;` 是否支持子目录绑定，`on` 或者 `off`，默认 `off`
+ - `<host_subdirectory>` 是否支持子目录绑定，`on` 或者 `off`，默认 `off`
 
 #### 参数示例
 
-添加一个标识为 `mysite` 的站点
-
 ```
-# 增加一个空的伪静态文件
-touch /etc/nginx/rewrite/mysite.conf
-
-# 配置各项参数
-service vhost add mysite mysite.com,www.mysite.com index.html,index.htm,index.php mysite.conf on
-
-# 可以只配置名称和域名，其他保存默认：
+# 添加一个标识为 `mysite`，域名为 `mysite.com` 的站点
 service vhost add mysite mysite.com
-```
 
-启动标识为 `mysite` 的站点
-
-```
+# 启动标识为 `mysite` 的站点
 service vhost start mysite
-```
 
-停止标识为 `mysite` 的站点
-
-```
+# 停止标识为 `mysite` 的站点
 service vhost stop mysite
-```
 
-编辑标识为 `mysite` 的站点
-
-```
+# 编辑标识为 `mysite` 的站点
 service vhost edit mysite
-```
 
-删除标识为 `mysite` 的站点
-
-```
+# 删除标识为 `mysite` 的站点
 service vhost del mysite
-```
 
-列出所有站点
-
-```
+# 列出所有站点
 service vhost list
+```
+
+## 伪静态文件
+
+```
+# 增加一个 `wordpress` 伪静态文件
+touch /etc/nginx/rewrite/wordpress.conf
+
+# 修改 `mysite` 站点的配置
+service vhost edit mysite mysite.com,www.mysite.com index.html,index.php,default.php wordpress.conf on
 ```
 
 ## 备份
@@ -160,29 +151,19 @@ service vbackup (start,list,del) <delete name.tar.gz>
 
  - `del` 删除
  
- - `&lt;delete name.tar.gz&gt; ` 需要删除的备份文件名称，和 `del` 搭配使用，存放在 `/home/backup/`
+ - `<delete name.tar.gz> ` 需要删除的备份文件名称，和 `del` 搭配使用，存放在 `/home/backup/`
 
 #### 参数示例
 
-添加一个新的备份
-
 ```
+# 添加一个新的备份
 service vbackup start
 
-```
-
-列出备份文件
-
-```
+# 列出备份文件
 service vbackup list
 
-```
-
-删除一个备份
-
-```
+# 删除一个备份
 service vbackup del c7-20151010-101010.tar.gz
-
 ```
 
 ## 示例图
