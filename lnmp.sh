@@ -51,6 +51,7 @@ function ConfirmInstall() {
         yum upgrade;
         exit;
     elif [ "$lnmpDo" == "Install" ]; then
+        InputIP;
         selectMySQL;
         selectPHP;
         selectNginx;
@@ -61,8 +62,26 @@ function ConfirmInstall() {
         StartService;
     elif [ "$lnmpDo" == "Exit" ]; then
         exit;
-    else  
+    else
         ConfirmInstall;
+    fi;
+}
+## 输入 IP 地址
+function InputIP()
+{
+    if [ "$ipAddress" == '' ]; then
+        echo '[Error] empty server ip.';
+        read -p '[Notice] Please input server ip:' ipAddress;
+        [ "$ipAddress" == '' ] && InputIP;
+    else
+        echo '[OK] Your server ip is:' && echo $ipAddress;
+        read -p '[Notice] This is your server ip? : (y/n)' confirmDM;
+        if [ "$confirmDM" == 'n' ]; then
+            ipAddress='';
+            InputIP;
+        elif [ "$confirmDM" != 'y' ]; then
+            InputIP;
+        fi;
     fi;
 }
 
@@ -128,7 +147,7 @@ function InstallReady() {
     startDate=$(date);
     startDateSecond=$(date +%s);
     echo "Start time: ${startDate}";
-    
+
     rm -rf /etc/localtime;
     ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime;
 
@@ -221,6 +240,8 @@ function ConfigService() {
 
     newHash=`echo -n $RANDOM  | md5sum | sed "s/ .*//" | cut -b -18`;
     sed -i "s/739174021564331540/${newHash}/g" /etc/phpMyAdmin/config.inc.php;
+
+    sed -i "s/localhost/${ipAddress}/g" /etc/nginx/conf.d/nginx-index.conf;
 
     mkdir -p /home/{wwwroot,userdata};
     mkdir -p /home/wwwroot/index/web;
