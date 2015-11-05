@@ -3,7 +3,7 @@ CentOS 7 YUM 安装 LNMP 环境
 
 CentOS 7 YUM Installation: Nginx 1.8/1.9 + MySQL 5.5/5.6/5.7 + PHP 5.5/5.6/7.0
 
-## 主要目录
+## 1、主要目录
 
 站点： `/home/wwwroot/`
 
@@ -13,17 +13,21 @@ MySQL 数据： `/home/userdata/`
 
 MySQL 配置： `/etc/my.cnf.d/`
 
-Nginx 配置(启用)：`/etc/nginx/conf.d/`
+Nginx 配置(启用)： `/etc/nginx/conf.d/`
 
-Nginx 配置(禁用)：`/etc/nginx/conf.d.stop/`
+Nginx 配置(禁用)： `/etc/nginx/conf.d.stop/`
 
-PHP 配置(启用)：`/etc/php-fpm.d/`
+PHP 配置(启用)： `/etc/php-fpm.d/`
 
-PHP 配置(禁用)：`/etc/php-fpm.d.stop/`
+PHP 配置(禁用)： `/etc/php-fpm.d.stop/`
 
 phpMyAdmin 配置： `/etc/phpMyAdmin/`
 
-## 安装
+SVN 配置： `/var/svn/repos/`
+
+## 2、安装
+
+***建议安装 CentOS 7 Minimal (最小化安装) 后再使用本脚本安装环境***
 
 ```
 # 安装 wget 和 unzip
@@ -42,7 +46,7 @@ bash lnmp.sh
 # bash lnmp.sh 2>&1 | tee lnmp.log
 ```
 
-## 服务管理
+## 3、服务管理
 
 ```
 # 启动 MySQL
@@ -71,9 +75,18 @@ systemctl stop nginx.service
 
 # 重启 Nginx
 systemctl restart nginx.service
+
+# 启动 SVN
+systemctl start svnserve.service
+
+# 停止 SVN
+systemctl stop svnserve.service
+
+# 重启 SVN
+systemctl restart svnserve.service
 ```
 
-## 站点管理
+## 4、站点管理
 
 ```
 service vhost (start,stop,list,add,edit,del,exit) <domain> <server_name> <index_name> <rewrite_file> <host_subdirectory>
@@ -127,7 +140,17 @@ service vhost del mysite
 service vhost list
 ```
 
-## 伪静态文件
+## 5、SVN 安装
+
+***项目名称请和站点标识保持一致，不然无法正常 checkout***
+
+```
+# SVN 安装命令
+bash svn.sh
+```
+
+
+## 6、伪静态文件
 
 ```
 # 增加一个 `wordpress` 伪静态文件
@@ -137,7 +160,7 @@ touch /etc/nginx/rewrite/wordpress.conf
 service vhost edit mysite mysite.com,www.mysite.com index.html,index.php,default.php wordpress.conf on
 ```
 
-## 备份
+## 7、备份
 
 ```
 service vbackup (start,list,del) <delete name.tar.gz>
@@ -166,11 +189,13 @@ service vbackup list
 service vbackup del c7-20151010-101010.tar.gz
 ```
 
-## 示例图
+## 8、示例图
 
 ![](http://i13.tietuku.com/65bbbe289d44a5d0.png)
 
+![](http://i13.tietuku.com/184a2be1381e39a5.png)
 
-## 协议
+
+## 9、协议
 
 The MIT License (MIT)
