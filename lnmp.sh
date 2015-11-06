@@ -182,6 +182,7 @@ function InstallReady() {
 ## 安装服务
 function InstallService() {
     echo "[Notice] YUM install ... ";
+    yum install -y epel-release;
 
     if [ "$freeV" == "Yes" ]; then
         mysqlRepoUrl=$mysqlCDNUrl;
@@ -196,8 +197,6 @@ function InstallService() {
         mysqlRepoUrl=$mysqlUrl;
         phpRepoUrl=$phpUrl;
         nginxRepoUrl=$nginxUrl;
-
-        yum install -y epel-release;
     fi;
 
     rpm --import mysql_pubkey.asc;
