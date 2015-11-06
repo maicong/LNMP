@@ -235,6 +235,14 @@ function InstallService() {
     sed -i "s@${phpUrl}@${phpRepoUrl}@g" $phpRepoS
     sed -i "s@${phpUrl}@${phpRepoUrl}@g" $php7Repo
 
+    sed -i "s/#baseurl=/baseurl=/g" $phpRepo;
+    sed -i "s/#baseurl=/baseurl=/g" $phpRepoS;
+    sed -i "s/#baseurl=/baseurl=/g" $php7Repo;
+
+    sed -i "s/mirrorlist=/#mirrorlist=/g" $phpRepo;
+    sed -i "s/mirrorlist=/#mirrorlist=/g" $phpRepoS;
+    sed -i "s/mirrorlist=/#mirrorlist=/g" $php7Repo;
+
     sed -i "/remi\/mirror/{n;s/enabled=0/enabled=1/g}" $phpRepo;
     sed -i "/test\/mirror/{n;n;s/enabled=0/enabled=1/g}" $phpRepo;
 
