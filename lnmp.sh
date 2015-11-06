@@ -182,7 +182,7 @@ function InstallReady() {
 ## 安装服务
 function InstallService() {
     echo "[Notice] YUM install ... ";
-    yum install -y epel-release;
+    yum install -y epel-release firewalld;
 
     if [ "$freeV" == "Yes" ]; then
         mysqlRepoUrl=$mysqlCDNUrl;
