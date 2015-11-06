@@ -232,16 +232,18 @@ function InstallService() {
     php7Repo=/etc/yum.repos.d/remi-php70.repo;
 
     sed -i "s@${phpUrl}@${phpRepoUrl}@g" $phpRepo;
-    sed -i "s@${phpUrl}@${phpRepoUrl}@g" $phpRepoS
-    sed -i "s@${phpUrl}@${phpRepoUrl}@g" $php7Repo
+    sed -i "s@${phpUrl}@${phpRepoUrl}@g" $phpRepoS;
+    sed -i "s@${phpUrl}@${phpRepoUrl}@g" $php7Repo;
 
-    sed -i "s/#baseurl=/baseurl=/g" $phpRepo;
-    sed -i "s/#baseurl=/baseurl=/g" $phpRepoS;
-    sed -i "s/#baseurl=/baseurl=/g" $php7Repo;
+    if [ "$freeV" == "Yes" ]; then
+        sed -i "s/#baseurl=/baseurl=/g" $phpRepo;
+        sed -i "s/#baseurl=/baseurl=/g" $phpRepoS;
+        sed -i "s/#baseurl=/baseurl=/g" $php7Repo;
 
-    sed -i "s/mirrorlist=/#mirrorlist=/g" $phpRepo;
-    sed -i "s/mirrorlist=/#mirrorlist=/g" $phpRepoS;
-    sed -i "s/mirrorlist=/#mirrorlist=/g" $php7Repo;
+        sed -i "s/mirrorlist=/#mirrorlist=/g" $phpRepo;
+        sed -i "s/mirrorlist=/#mirrorlist=/g" $phpRepoS;
+        sed -i "s/mirrorlist=/#mirrorlist=/g" $php7Repo;
+    fi;
 
     sed -i "/remi\/mirror/{n;s/enabled=0/enabled=1/g}" $phpRepo;
     sed -i "/test\/mirror/{n;n;s/enabled=0/enabled=1/g}" $phpRepo;
