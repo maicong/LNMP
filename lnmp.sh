@@ -15,33 +15,39 @@ echo "https://github.com/maicong/LNMP";
 echo "Usage: bash lnmp.sh";
 echo "================================================================";
 
-lnmpDo="";
-mysqlV="";
-phpV="";
-nginxV="";
+lnmpDo='';
+mysqlV='';
+phpV='';
+nginxV='';
 startDate='';
 startDateSecond='';
 ipAddress=`ip addr | egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | egrep -v "^192\.168|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-2]\.|^10\.|^127\.|^255\." | head -n 1`;
+mysqlUrl='http://repo.mysql.com';
+phpUrl='http://rpms.remirepo.net';
+nginxUrl='http://nginx.org';
+mysqlCDNUrl='http://cdn-mysql.b0.upaiyun.com';
+phpCDNUrl='http://cdn-remi.b0.upaiyun.com';
+nginxCDNUrl='http://cdn-nginx.b0.upaiyun.com';
 
 ## 确认安装
 function ConfirmInstall() {
     echo "[Notice] Please select: ";
     select lnmpDo in "Install" "Uninstall" "Upgrade" "Exit"; do break; done;
     if [ "$lnmpDo" == "Uninstall" ]; then
-        read -p '[Notice] Did you backup data? (y/n) : ' confirmYN;
+        read -p '[Notice] Are you sure? (y/n) : ' confirmYN;
         [ "$confirmYN" != 'y' ] && exit;
         echo "[Notice] Uninstalling... ";
         systemctl stop mysqld.service;
         systemctl stop php-fpm.service;
         systemctl stop nginx.service;
-        yum remove -y epel* epel-* mysql* mysql-* httpd* httpd-* nginx* nginx-* php* php-* remi* remi-*;
+        yum autoremove -y epel* epel-* mysql* mysql-* httpd* httpd-* nginx* nginx-* php* php-* remi* remi-*;
         rm -rf /etc/nginx;
         rm -rf /etc/my.cnf.d;
         rm -rf /etc/php*;
         rm -rf /etc/my.cnf*;
         rm -rf /home/userdata;
         rm -rf /home/wwwroot;
-        ps -ef | grep "www" | awk '{ print $2 }' | uniq | xargs kill -9;
+        ps -ef | grep "www" | grep -v grep | awk '{ print $2 }' | uniq | xargs kill -9;
         userdel -r www;
         groupdel www;
         yum clean all;
@@ -55,6 +61,7 @@ function ConfirmInstall() {
         selectMySQL;
         selectPHP;
         selectNginx;
+        freeDom;
         CloseSelinux;
         InstallReady;
         InstallService;
@@ -127,6 +134,20 @@ function selectNginx() {
     fi;
 }
 
+## 启用 CDN 地址
+function freeDom() {
+    echo "[Notice] Are you in GFW ?";
+    select freeV in "Yes" "No" "Exit"; do
+        break;
+    done;
+
+    [ "$freeV" == "Exit" ] && exit;
+
+    if [ "$freeV" != "Yes" ] && [ "$freeV" != "No" ] && [ "$freeV" != "Exit" ]; then
+        freeDom;
+    fi;
+}
+
 ## 关闭并禁用 selinux
 function CloseSelinux() {
     [ -s /etc/selinux/config ] && sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config;
@@ -161,17 +182,38 @@ function InstallReady() {
 ## 安装服务
 function InstallService() {
     echo "[Notice] YUM install ... ";
-    yum install -y epel-release;
+
+    if [ "$freeV" == "Yes" ]; then
+        mysqlRepoUrl=$mysqlCDNUrl;
+        phpRepoUrl=$phpCDNUrl;
+        nginxRepoUrl=$nginxCDNUrl;
+
+        mv -bfu /etc/yum.repos.d/epel.repo /etc/yum.repos.d/epel.repo.bak;
+        mv -bfu /etc/yum.repos.d/epel-testing.repo /etc/yum.repos.d/epel-testing.repo.bak;
+
+        wget -c --tries=3 -O /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-7.repo;
+    else
+        mysqlRepoUrl=$mysqlUrl;
+        phpRepoUrl=$phpUrl;
+        nginxRepoUrl=$nginxUrl;
+
+        yum install -y epel-release;
+    fi;
 
     rpm --import mysql_pubkey.asc;
-    rpm --import http://rpms.remirepo.net/RPM-GPG-KEY-remi;
-    rpm --import http://nginx.org/packages/keys/nginx_signing.key;
+    rpm --import ${phpRepoUrl}/RPM-GPG-KEY-remi;
+    rpm --import ${nginxRepoUrl}/packages/keys/nginx_signing.key;
 
-    rpm -Uvh http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm;
-    rpm -Uvh http://remi.mirrors.arminco.com/enterprise/remi-release-7.rpm;
-    rpm -Uvh http://nginx.org/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm;
+    rpm -Uvh ${mysqlRepoUrl}/mysql-community-release-el7-5.noarch.rpm;
+    rpm -Uvh ${phpRepoUrl}/enterprise/remi-release-7.rpm;
+    rpm -Uvh ${nginxRepoUrl}/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm;
 
     mysqlRepo=/etc/yum.repos.d/mysql-community.repo;
+    mysqlRepoS=/etc/yum.repos.d/mysql-community-source.repo;
+
+    sed -i "s@${mysqlUrl}@${mysqlRepoUrl}@g" $mysqlRepo;
+    sed -i "s@${mysqlUrl}@${mysqlRepoUrl}@g" $mysqlRepoS;
+
     if [ "$mysqlV" == "MySQL-5.5" ]; then
         sed -i "/yum\/mysql\-5\.5/{n;s/enabled=0/enabled=1/g}" $mysqlRepo;
         sed -i "/yum\/mysql\-5\.6/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
@@ -187,7 +229,12 @@ function InstallService() {
     fi;
 
     phpRepo=/etc/yum.repos.d/remi.repo;
+    phpRepoS=/etc/yum.repos.d/remi-safe.repo;
     php7Repo=/etc/yum.repos.d/remi-php70.repo;
+
+    sed -i "s@${phpUrl}@${phpRepoUrl}@g" $phpRepo;
+    sed -i "s@${phpUrl}@${phpRepoUrl}@g" $phpRepoS
+    sed -i "s@${phpUrl}@${phpRepoUrl}@g" $php7Repo
 
     sed -i "/remi\/mirror/{n;s/enabled=0/enabled=1/g}" $phpRepo;
     sed -i "/test\/mirror/{n;n;s/enabled=0/enabled=1/g}" $phpRepo;
@@ -207,6 +254,9 @@ function InstallService() {
     fi;
 
     nginxRepo=/etc/yum.repos.d/nginx.repo;
+
+    sed -i "s@${nginxUrl}@${nginxRepoUrl}@g" $nginxRepo
+
     if [ "$nginxV" == "Nginx-1.8" ]; then
         sed -i "s/\/mainline//g" $nginxRepo;
     elif [ "$nginxV" == "Nginx-1.9-Dev" ]; then

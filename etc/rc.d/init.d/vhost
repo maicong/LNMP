@@ -9,6 +9,19 @@
 # Sanity check
 [ $(id -g) != "0" ] && die "Script must be run as root.";
 
+showOk(){
+    echo -e "\033[34m[OK]\033[0m $1";
+}
+
+showError(){
+    echo -e "\033[31m[ERROR]\033[0m $1";
+}
+
+showNotice(){
+    echo -e "\033[36m[Notice]\033[0m $1";
+}
+
+
 if [ "$*" != '' ]; then
     selected=$1;
     domain=$2;
@@ -25,6 +38,9 @@ fi;
 
 www_root=/home/wwwroot;
 php_fpm_BIN=/usr/sbin/php-fpm;
+php_fpm_EDIR=/etc/php-fpm.d;
+php_fpm_SDIR=/etc/php-fpm.d.stop;
+php_default_PID=/run/php-fpm/php-fpm.pid;
 nginx_BIN=/usr/sbin/nginx;
 nginx_CONF=/etc/nginx/nginx.conf;
 nginx_EDIR=/etc/nginx/conf.d;
@@ -32,11 +48,12 @@ nginx_SDIR=/etc/nginx/conf.d.stop;
 nginx_PID=/var/run/nginx.pid;
 
 if [ "$domain" != '' ]; then
-    php_fpm_ECONF=/etc/php-fpm.d/php-$domain.conf;
-    php_fpm_SCONF=/etc/php-fpm.d.stop/php-$domain.conf;
-    php_fpm_PID=/run/php-fpm/php-fpm-$domain.pid;
-    nginx_ECONF=$nginx_EDIR/nginx-$domain.conf;
-    nginx_SCONF=$nginx_SDIR/nginx-$domain.conf; 
+    php_fpm_PID=/run/php-fpm/php-fpm-${domain}.pid;
+    php_fpm_SOCK=/dev/shm/php-fpm-${domain}.sock;
+    php_fpm_ECONF=${php_fpm_EDIR}/php-${domain}.conf;
+    php_fpm_SCONF=${php_fpm_SDIR}/php-${domain}.conf;
+    nginx_ECONF=$nginx_EDIR/nginx-${domain}.conf;
+    nginx_SCONF=$nginx_SDIR/nginx-${domain}.conf;
 fi;
 
 if [ "$selected" == 'list' ]; then
@@ -50,22 +67,22 @@ elif [ "$selected" == 'add' ]; then
 
     if [ "$domain" == '' ]; then
         read -p "[Notice] Please input domain: " domain;
-        [ "$domain" == '' ] && echo '[error] empty domain' && exit 1;
+        [ "$domain" == '' ] && showError "empty domain" && exit 1;
         service vhost add $domain;
         exit 0;
     fi;
 
     if [ "$server_name" == '' ]; then
         read -p "[Notice] Please input server name (e.g: domain.com,www.domain.com): " server_name;
-        [ "$server_name" == '' ] && echo "[error] empty server name" && exit 1;
+        [ "$server_name" == '' ] && showError "empty server name" && exit 1;
         service vhost add $domain $server_name;
         exit 0;
     fi;
 
-    [ -f $nginx_ECONF ] || [ -f $nginx_SCONF ] && echo "[Error] $domain is exist!" && exit 1;
+    [ -f $nginx_ECONF ] || [ -f $nginx_SCONF ] && showError "${domain} is exist!" && exit 1;
 
     # nginx-host.conf
-    [ -d /etc/php-fpm.d ] && sock=php-fpm-$domain.sock || sock=php-fpm.sock;
+    [ -d "$php_fpm_EDIR" ] && sock=php-fpm-$domain.sock || sock=php-fpm.sock;
     cp /etc/nginx/nginx-host.conf $nginx_ECONF;
 
     sed -i "s#example#$domain#g" $nginx_ECONF;
@@ -84,7 +101,7 @@ elif [ "$selected" == 'add' ]; then
     [ "$host_subdirectory" == 'on' ] && sed -i "/set \$subdomain/a\ \tif ( \$host ~* \"(?:(\\\w+\\\.){0,})(\\\b(?\!www\\\b)\\\w+)\\\.\\\b(?\!(com|org|gov|net|cn)\\\b)\\\w+\\\.\[a-zA-Z\]+\" ) { set \$subdomain \"\/\$2\"; }" $nginx_ECONF;
 
     # php-fpm
-    if [ -d /etc/php-fpm.d ];then
+    if [ -d "$php_fpm_EDIR" ];then
         cp /etc/php-fpm-host.conf $php_fpm_ECONF;
         sed -i "s#example#$domain#g" $php_fpm_ECONF;
     fi;
@@ -94,24 +111,25 @@ elif [ "$selected" == 'add' ]; then
     touch $www_root/$domain/index.html;
     echo 'Welcome!' > $www_root/$domain/index.html;
 
+    $php_fpm_BIN --fpm-config $php_fpm_ECONF;
+
     if [ -f $nginx_PID ]; then
         kill -HUP `cat $nginx_PID`;
     else
         $nginx_BIN -c $nginx_CONF;
     fi;
 
-    $php_fpm_BIN --daemonize --fpm-config $php_fpm_ECONF --pid $php_fpm_PID;
-    echo "[OK] successfully create $domain vhost";
-    echo "The DocumentRoot: $www_root/$domain/";
+    showOk "successfully create ${domain} vhost";
+    showOk "The DocumentRoot: ${www_root}/${domain}/";
 
     exit;
 
 elif [ "$selected" == 'edit' ]; then
 
     [ "$domain" == '' ] && read -p "[Notice] Please input domain:" domain
-    [ "$domain" == '' ] && echo '[error] empty domain' && exit 1;
+    [ "$domain" == '' ] && showError "empty domain" && exit 1;
 
-    [ ! -f $nginx_ECONF ] && [ ! -f $nginx_SCONF ] && echo "[Error] $domain not exist!" && exit 1;
+    [ ! -f $nginx_ECONF ] && [ ! -f $nginx_SCONF ] && showError "${domain} not exist!" && exit 1;
     [ -f $nginx_ECONF ] && host_conf_file=$nginx_ECONF || host_conf_file=$nginx_SCONF;
 
     [ "$server_name" == '' ] && read -p "[Notice] Please input server name (e.g: domain.com,www.domain.com). cancel edit, please input 0 : " server_name;
@@ -135,76 +153,106 @@ elif [ "$selected" == 'edit' ]; then
     sed -i "/set \$subdomain \"\/\$2\"/d" $host_conf_file;
     [ "$host_subdirectory" == 'on' ] && sed -i "/set \$subdomain/a\ \tif ( \$host ~* \"(?:(\\\w+\\\.){0,})(\\\b(?\!www\\\b)\\\w+)\\\.\\\b(?\!(com|org|gov|net|cn)\\\b)\\\w+\\\.\[a-zA-Z\]+\" ) { set \$subdomain \"\/\$2\"; }" $host_conf_file;
 
-    kill -HUP `cat /var/run/nginx.pid`;
-    kill -QUIT `cat /run/php-fpm/php-fpm-$domain.pid`;
-    /usr/sbin/php-fpm --fpm-config /etc/php-fpm.d/php-$domain.conf;
-    echo "[OK] successfully change $domain vhost";
+    if [ -f $nginx_PID ]; then
+        kill -HUP `cat $nginx_PID`;
+    else
+        $nginx_BIN -c $nginx_CONF;
+    fi;
+
+    if [ -f $php_fpm_PID ]; then
+        kill -QUIT `cat $php_fpm_PID`;
+    else
+        $php_fpm_BIN --fpm-config $php_fpm_ECONF;
+    fi;
+
+    showOk "successfully change ${domain} vhost";
 
     exit;
 
 elif [ "$selected" == 'start' ]; then
 
     if [ "$domain" == '' ]; then
-        echo "[Notice] All host start...";
+        showNotice "All host start...";
         for line in `ls $www_root/`; do
-            if [ -f "$nginx_SDIR/nginx-$line.conf" ]; then
+            if [ -f "${nginx_SDIR}/nginx-${line}.conf" ]; then
                 service vhost start $line;
             else
-                echo "[ERROR] $line host maybe running or not exist";
+                showError "${line} host maybe running or not exist";
             fi;
         done;
         exit 0;
+    else
+        [ ! -f "${nginx_SDIR}/nginx-${domain}.conf" ] && showError "${domain} host not exist" && exit 1;
     fi;
 
-    # php
-    if [ -f $php_fpm_PID ]; then
-        echo "[ERROR] $domain vhost php-fpm already running";
+    [ -f $php_fpm_SCONF ] && mv -f $php_fpm_SCONF $php_fpm_ECONF;
+    [ -f $nginx_SCONF ] && mv -f $nginx_SCONF $nginx_ECONF;
+
+    phpMsg="";
+    nginxMsg="";
+
+    if [ -f $php_fpm_PID ] && [ -S $php_fpm_SOCK ]; then
+        kill -USR2 `cat $php_fpm_PID` && phpMsg="successfully restart ${domain} host php-fpm";
     else
-        [ -f $php_fpm_SCONF ] && mv -f $php_fpm_SCONF $php_fpm_ECONF;
-        [ -f $php_fpm_ECONF ] && $php_fpm_BIN --daemonize --fpm-config $php_fpm_ECONF --pid $php_fpm_PID;
-        [ -f $php_fpm_PID ] && echo "[OK] successfully start $domain vhost php-fpm";
+        pid=`ps -ef | grep $php_fpm_ECONF | grep -v grep | awk '{ print $2 }' | uniq`;
+        [ "$pid" != "" ] && kill -QUIT $pid;
+        $php_fpm_BIN --fpm-config $php_fpm_ECONF && phpMsg="successfully start ${domain} host php-fpm";
     fi;
 
-    # nginx
-    if [ -f $nginx_PID ]; then
-        echo "[ERROR] $domain vhost nginx already running";
+    if [ -f $nginx_PID ] && [ $(pgrep nginx | wc -l) != "0" ]; then
+        kill -HUP `cat $nginx_PID` && nginxMsg="successfully restart ${domain} host nginx";
     else
-        [ -f $nginx_SCONF ] && mv -f $nginx_SCONF $nginx_ECONF;
-        [ -f $nginx_ECONF ] && $nginx_BIN -c $nginx_CONF;
-        [ -f $nginx_PID ] && echo "[OK] successfully start $domain vhost nginx";
+        $nginx_BIN -c $nginx_CONF && nginxMsg="successfully start ${domain} host nginx";
     fi;
+
+    [ "$phpMsg" != "" ] && showOk "$phpMsg" || showError "Failed start ${domain} host php-fpm";
+    [ "$nginxMsg" != "" ] && showOk "$nginxMsg" || showError "Failed start ${domain} host nginx";
 
     exit;
 
 elif [ "$selected" == 'stop' ]; then
 
     if [ "$domain" == '' ]; then
-        echo "[Notice] All host stop...";
+        showNotice "All host stop...";
+
         for line in `ls $www_root/`; do
-            if [ -f "$nginx_EDIR/nginx-$line.conf" ]; then
+            if [ -f "${nginx_EDIR}/nginx-${line}.conf" ]; then
                 service vhost stop $line;
             else
-                echo "[ERROR] $line host maybe stopped or not exist";
+                showError "${line} host maybe stopped or not exist";
             fi;
         done;
         exit 0;
-    fi;
-
-    # nginx
-    if [ -f $nginx_PID ]; then
-        [ -f $nginx_ECONF ] && mv -f $nginx_ECONF $nginx_SCONF;
-        $nginx_BIN -s stop && echo "[OK] successfully stop $domain vhost nginx";
     else
-        echo "[ERROR] $domain vhost nginx is not running";
+        [ ! -f "${nginx_EDIR}/nginx-${domain}.conf" ] && showError "${domain} host not exist" && exit 1;
     fi;
 
-    # php
+    [ -f $php_fpm_ECONF ] && mv -f $php_fpm_ECONF $php_fpm_SCONF;
+    [ -f $nginx_ECONF ] && mv -f $nginx_ECONF $nginx_SCONF;
+
     if [ -f $php_fpm_PID ]; then
-        [ -f $php_fpm_ECONF ] && mv -f $php_fpm_ECONF $php_fpm_SCONF;
-        kill -QUIT `cat $php_fpm_PID` && echo "[OK] successfully stop $domain vhost php-fpm";
+        kill -QUIT `cat $php_fpm_PID` \
+        && showOk "successfully stop ${domain} host php-fpm" \
+        || showError "Failed stop ${domain} host php-fpm";
     else
-        echo "[ERROR] $domain vhost php-fpm is not running";
+        showError "${domain} host php-fpm was stopped";
     fi;
+
+    rm -f $php_fpm_SOCK;
+
+    if [ -f $nginx_PID ]; then
+        kill -HUP `cat $nginx_PID` \
+        && showOk "successfully stop ${domain} host nginx" \
+        || showError "Failed stop ${domain} host nginx";
+    else
+        showError "${domain} host nginx was stopped";
+    fi;
+
+    phpConfNum=`ls $php_fpm_EDIR | egrep "*.conf" | wc -l`;
+    nginxConfNum=`ls $nginx_EDIR | egrep "*.conf" | wc -l`;
+
+    [ "$phpConfNum" == "0" ] && `pgrep php-fpm | xargs kill &>/dev/null`;
+    [ "$nginxConfNum" == "0" ] && `pgrep nginx | xargs kill &>/dev/null`;
 
     exit;
 
@@ -212,27 +260,35 @@ elif [ "$selected" == 'del' ]; then
 
     if [ "$domain" == '' ]; then
         read -p "[Notice] deleted domain:" domain;
-        [ "$domain" == '' ] && echo '[error] empty domain' && exit 1;
+        [ "$domain" == '' ] && showError "empty domain" && exit 1;
         service vhost del $domain;
         exit 0;
     fi;
 
-    #nginx
-    [ ! -f $nginx_ECONF ] && [ ! -f $nginx_SCONF ] && echo "[Error] $domain not exist!" && exit 1;
-    [ -f $nginx_ECONF ] && rm -f $nginx_ECONF;
-    [ -f $nginx_SCONF ] && rm -f $nginx_SCONF;
-    [ -f $nginx_PID ] && $nginx_BIN -s stop && echo "[OK] successfully delete $domain vhost nginx";
+    if [ -f $php_fpm_PID ]; then
+        kill -QUIT `cat $php_fpm_PID` \
+        && showOk "successfully stop ${domain} host php-fpm" \
+        || showError "Failed stop ${domain} host php-fpm";
+    fi;
 
-    #php
-    [ -f $php_fpm_ECONF ] && rm -f $php_fpm_ECONF;
-    [ -f $php_fpm_SCONF ] && rm -f $php_fpm_SCONF;
-    [ -f $php_fpm_PID ] && kill -QUIT `cat $php_fpm_PID` && echo "[OK] successfully delete $domain vhost php-fpm";
+    rm -f $php_fpm_SOCK $php_fpm_ECONF $php_fpm_SCONF;
+
+    [ ! -f $nginx_ECONF ] && [ ! -f $nginx_SCONF ] && showError "${domain} not exist!" && exit 1;
+
+    if [ -f $nginx_PID ]; then
+        kill -HUP `cat $nginx_PID` \
+        && showOk "successfully stop ${domain} host nginx" \
+        || showError "Failed stop ${domain} host nginx";
+    fi;
+
+    rm -f $nginx_ECONF $nginx_SCONF;
 
     #wwwroot
     read -p '[Notice] Delete the directory in wwwroot? (y/n) : ' confirmYN;
     [ "$confirmYN" != 'y' ] && exit;
-    rm -rf $www_root/$domain && echo "[OK] successfully delete $domain vhost directory";
-    
+    rm -rf $www_root/$domain && showOk "successfully delete $domain host directory";
+
 else
+    showError "${selected} is not defined";
     exit;
 fi;
