@@ -321,6 +321,9 @@ function StartService() {
     systemctl enable mysqld.service;
     systemctl enable php-fpm.service;
     systemctl enable nginx.service;
+    systemctl enable firewalld.service;
+
+    systemctl start firewalld.service
 
     firewall-cmd --permanent --zone=public --add-service=http;
     firewall-cmd --permanent --zone=public --add-service=https;
