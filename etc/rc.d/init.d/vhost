@@ -182,7 +182,9 @@ elif [ "$selected" == 'start' ]; then
         done;
         exit 0;
     else
-        [ ! -f "${nginx_SDIR}/nginx-${domain}.conf" ] && showError "${domain} host not exist" && exit 1;
+        [ ! -f "${nginx_SDIR}/nginx-${domain}.conf" ] \
+        && [ ! -f "${nginx_EDIR}/nginx-${domain}.conf" ] \
+        && showError "${domain} host not exist" && exit 1;
     fi;
 
     [ -f $php_fpm_SCONF ] && mv -f $php_fpm_SCONF $php_fpm_ECONF;
@@ -224,7 +226,9 @@ elif [ "$selected" == 'stop' ]; then
         done;
         exit 0;
     else
-        [ ! -f "${nginx_EDIR}/nginx-${domain}.conf" ] && showError "${domain} host not exist" && exit 1;
+        [ ! -f "${nginx_EDIR}/nginx-${domain}.conf" ] \
+        && [ ! -f "${nginx_SDIR}/nginx-${domain}.conf" ] \
+        && showError "${domain} host not exist" && exit 1;
     fi;
 
     [ -f $php_fpm_ECONF ] && mv -f $php_fpm_ECONF $php_fpm_SCONF;
