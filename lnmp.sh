@@ -303,7 +303,6 @@ function ConfigService() {
     sed -i "s/localhost/${ipAddress}/g" /etc/nginx/conf.d/nginx-index.conf;
 
     mkdir -p /home/{wwwroot,userdata};
-    mkdir -p /home/wwwroot/index/web;
     cp -a home/wwwroot/index /home/wwwroot/;
     cp -a /usr/share/phpMyAdmin /home/wwwroot/index/;
     rm -rf /home/wwwroot/index/phpMyAdmin/doc/html;
