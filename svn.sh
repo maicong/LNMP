@@ -74,7 +74,7 @@ function InstallSVN()
 cat >> ${projectPath}/conf/authz << EOF
 [/]
 ${username} = rw
-* = r
+* =
 EOF
 
 cat >> ${projectPath}/conf/passwd << EOF
