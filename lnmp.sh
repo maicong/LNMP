@@ -22,6 +22,7 @@ nginxV='';
 startDate='';
 startDateSecond='';
 ipAddress=`ip addr | egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | egrep -v "^192\.168|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-2]\.|^10\.|^127\.|^255\." | head -n 1`;
+mysqlPWD=`echo -n $RANDOM  | md5sum | sed "s/ .*//" | cut -b -8`;
 mysqlUrl='http://repo.mysql.com';
 phpUrl='http://rpms.remirepo.net';
 nginxUrl='http://nginx.org';
@@ -73,6 +74,7 @@ function ConfirmInstall() {
         ConfirmInstall;
     fi;
 }
+
 ## 输入 IP 地址
 function InputIP()
 {
@@ -150,12 +152,14 @@ function freeDom() {
 
 ## 关闭并禁用 selinux
 function CloseSelinux() {
+    echo "[Notice] Close selinux ... ";
     [ -s /etc/selinux/config ] && sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config;
     setenforce 0 >/dev/null 2>&1;
 }
 
 ## 准备安装
 function InstallReady() {
+    echo "[Notice] Install ready ... ";
     yum_repos_s=`ls /etc/yum.repos.d | grep .repo | wc -l`;
     if [ "$yum_repos_s" == '0' ]; then
         wget -c -P /etc/yum.repos.d --tries=3 http://mirrors.aliyun.com/repo/Centos-7.repo;
@@ -176,12 +180,12 @@ function InstallReady() {
     mkdir -p /etc/yum.repos.d/bak.$time/;
     mv -bfu /etc/yum.repos.d/{epel*,mysql*,remi*,nginx*} /etc/yum.repos.d/bak.$time/ >& /dev/null;
 
-    yum upgrade -y;
+    #yum upgrade -y;
 }
 
 ## 安装服务
 function InstallService() {
-    echo "[Notice] YUM install ... ";
+    echo "[Notice] Installing service ... ";
     yum install -y epel-release firewalld;
 
     if [ "$freeV" == "Yes" ]; then
@@ -280,6 +284,7 @@ function InstallService() {
 
 ## 配置服务
 function ConfigService() {
+    echo "[Notice] Config service ... ";
     mkdir -p /etc/php-fpm.d.stop;
     mv -bfu /etc/php-fpm.d/* /etc/php-fpm.d.stop/;
     mv -bfu /etc/php.ini /etc/php.ini.bak;
@@ -308,6 +313,15 @@ function ConfigService() {
     rm -rf /home/wwwroot/index/phpMyAdmin/doc/html;
     cp -a /usr/share/doc/phpMyAdmin-*/html /home/wwwroot/index/phpMyAdmin/doc/;
 
+    sed -i "s@/var/lib/mysql@/home/userdata@g" /etc/my.cnf;
+    echo -e "\n[client]\nsocket = /home/userdata/mysql.sock" >> /etc/my.cnf;
+
+    if [ "$mysqlV" != "MySQL-5.7-Dev" ]; then
+        mysql_install_db --user=mysql;
+    else
+        mysqld --initialize-insecure --user=mysql;
+    fi;
+
     groupadd www;
     useradd -m -s /sbin/nologin -g www www;
 
@@ -317,6 +331,7 @@ function ConfigService() {
 
 ## 启动服务
 function StartService() {
+    echo "[Notice] Start service ... ";
     systemctl enable mysqld.service;
     systemctl enable php-fpm.service;
     systemctl enable nginx.service;
@@ -332,10 +347,12 @@ function StartService() {
     systemctl start php-fpm.service;
     systemctl start nginx.service;
 
-    InstallCompleted;
+    mysqladmin -u root password "$mysqlPWD";
+    mysqladmin -u root -p"$mysqlPWD" -h $(hostname) password "$mysqlPWD";
+    mysql -u root -p"$mysqlPWD" -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');DELETE FROM mysql.user WHERE User='';DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';FLUSH PRIVILEGES;";
+    rm -rf /home/userdata/test;
 
-    echo -e "\n\n\033[42m mysql secure installation \033[0m";
-    mysql_secure_installation;
+    InstallCompleted;
 }
 
 ## 安装完成
@@ -349,7 +366,7 @@ function InstallCompleted() {
         echo -e "\033[34m PHP: \033[0m /etc/php-fpm.d/";
         echo -e "\033[34m MySQL Data: \033[0m /home/userdata/";
         echo -e "\033[34m MySQL User: \033[0m root";
-        echo -e "\033[34m MySQL Password: \033[0m <↓↓ mysql secure installation ↓↓>";
+        echo -e "\033[34m MySQL Password: \033[0m ${mysqlPWD}";
         echo -e "\033[34m Host Management: \033[0m service vhost (start,stop,list,add,edit,del,exit) <domain> <server_name> <index_name> <rewrite_file> <host_subdirectory>";
         echo "Start time: $startDate";
         echo "Completion time: $(date) (Use: $[($(date +%s)-startDateSecond)/60] minute)";
