@@ -17,6 +17,7 @@ echo "================================================================";
 
 project='';
 projectPath='';
+webPath='';
 username='';
 password=`cat /dev/urandom | head -1 | md5sum | head -c 12`;
 ipAddress=`ip addr | egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | egrep -v "^192\.168|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-2]\.|^10\.|^127\.|^255\." | head -n 1`;
@@ -57,17 +58,35 @@ function InputName()
         fi;
     fi;
     projectPath="/var/svn/repos/${project}";
+    webPath="/home/wwwroot/${project}";
     username="user-${project}";
-    [ -d "${projectPath}" ] && echo "[Error] ${project} is exist!" && InputName;
+    [ -d "${projectPath}" ] && echo "[Error] ${project} is exist!" && project='' && InputName;
     mkdir -p ${projectPath};
 }
 
+## 输入 WEB 目录
+function InputWebPath()
+{
+    if [ "$webPath" == '' ]; then
+        read -p '[Notice] Please input web directory:' webPath;
+        [ "$webPath" == '' ] && InputWebPath;
+    else
+        echo '[OK] Your web directory is:' && echo $webPath;
+        read -p '[Notice] This is your web directory? : (y/n)' confirmDM;
+        if [ "$confirmDM" == 'n' ]; then
+            webPath='';
+            InputWebPath;
+        elif [ "$confirmDM" != 'y' ]; then
+            InputWebPath;
+        fi;
+    fi;
+    [ -d "${webPath}/.svn/" ] && echo "[Error] ${webPath} is exist!" && webPath='' && InputWebPath;
+}
 
 ## 安装 SVN
 function InstallSVN()
 {
-
-    yum install subversion -y;
+    [ $(rpm -qa subversion | wc -l) == "0" ] && yum install subversion -y;
 
     svnadmin create ${projectPath};
 
@@ -95,7 +114,7 @@ export LANG=en_US.UTF-8
 
 REPOS="\$1"
 REV="\$2"
-WEB_PATH=/home/wwwroot/${project}
+WEB_PATH=${webPath}
 LOG_PATH=/tmp/svn_commit.log
 SVN_PATH=/usr/bin/svn
 SVN_REPOS=svn://localhost/repos/${project}
@@ -134,5 +153,6 @@ function InstallCompleted()
 
 InputIP;
 InputName;
+InputWebPath;
 InstallSVN;
 InstallCompleted;
