@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-## CentOS 7 YUM Installation: Nginx 1.8/1.9 + MySQL 5.5/5.6/5.7 + PHP 5.5/5.6/7.0
+## CentOS 7 YUM Installation: Nginx 1.8/1.9 + MySQL 5.5/5.6/5.7(MariaDB 5.5/10.0/10.1) + PHP 5.5/5.6/7.0 + phpMyAdmin(Adminer)
 ## https://github.com/maicong/LNMP
 ## Usage: bash lnmp.sh
 
@@ -10,7 +10,7 @@ clear;
 [ $(id -g) != "0" ] && die "Script must be run as root.";
 
 echo "================================================================";
-echo "CentOS 7 YUM Installation: Nginx 1.8/1.9 + MySQL 5.5/5.6/5.7 + PHP 5.5/5.6/7.0";
+echo "CentOS 7 YUM Installation: Nginx 1.8/1.9 + MySQL 5.5/5.6/5.7(MariaDB 5.5/10.0/10.1) + PHP 5.5/5.6/7.0 + phpMyAdmin(Adminer)";
 echo "https://github.com/maicong/LNMP";
 echo "Usage: bash lnmp.sh";
 echo "================================================================";
@@ -19,16 +19,20 @@ lnmpDo='';
 mysqlV='';
 phpV='';
 nginxV='';
+dbV='';
 startDate='';
 startDateSecond='';
 ipAddress=`ip addr | egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | egrep -v "^192\.168|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-2]\.|^10\.|^127\.|^255\." | head -n 1`;
 mysqlPWD=`echo -n $RANDOM  | md5sum | sed "s/ .*//" | cut -b -8`;
 mysqlUrl='http://repo.mysql.com';
+mariaDBUrl='http://yum.mariadb.org';
 phpUrl='http://rpms.remirepo.net';
 nginxUrl='http://nginx.org';
 mysqlCDNUrl='http://cdn-mysql.b0.upaiyun.com';
+mariaDBCDNUrl='http://cdn-mariadb.b0.upaiyun.com';
 phpCDNUrl='http://cdn-remi.b0.upaiyun.com';
 nginxCDNUrl='http://cdn-nginx.b0.upaiyun.com';
+installDB='';
 
 ## 确认安装
 function ConfirmInstall() {
@@ -41,7 +45,7 @@ function ConfirmInstall() {
         systemctl stop mysqld.service;
         systemctl stop php-fpm.service;
         systemctl stop nginx.service;
-        yum autoremove -y epel* epel-* mysql* mysql-* httpd* httpd-* nginx* nginx-* php* php-* remi* remi-*;
+        yum autoremove -y epel* epel-* mysql* mysql-* MariaDB-* httpd* httpd-* nginx* nginx-* php* php-* remi* remi-*;
         rm -rf /etc/nginx;
         rm -rf /etc/my.cnf.d;
         rm -rf /etc/php*;
@@ -62,6 +66,7 @@ function ConfirmInstall() {
         selectMySQL;
         selectPHP;
         selectNginx;
+        selectDBMGT;
         freeDom;
         CloseSelinux;
         InstallReady;
@@ -79,7 +84,7 @@ function ConfirmInstall() {
 function InputIP()
 {
     if [ "$ipAddress" == '' ]; then
-        echo '[Error] empty server ip.';
+        echo '[Error] Empty server ip.';
         read -p '[Notice] Please input server ip:' ipAddress;
         [ "$ipAddress" == '' ] && InputIP;
     else
@@ -96,35 +101,41 @@ function InputIP()
 
 ## 选择 MySQL 版本
 function selectMySQL() {
-    echo "[Notice] Please select MySQL Version: ";
-    select mysqlV in "MySQL-5.5" "MySQL-5.6" "MySQL-5.7-Dev" "Exit"; do
+    echo "[Notice] Please select MySQL version: ";
+    select mysqlV in "MySQL-5.5" "MySQL-5.6" "MySQL-5.7-Dev" "MariaDB-5.5" "MariaDB-10.0" "MariaDB-10.1" "Exit"; do
         break;
     done;
 
     [ "$mysqlV" == "Exit" ] && exit;
 
-    if [ "$mysqlV" != "MySQL-5.5" ] && [ "$mysqlV" != "MySQL-5.6" ] && [ "$mysqlV" != "MySQL-5.7-Dev" ] && [ "$mysqlV" != "Exit" ]; then
+    if [ "$mysqlV" != "MySQL-5.5" ] &&
+    [ "$mysqlV" != "MySQL-5.6" ] &&
+    [ "$mysqlV" != "MySQL-5.7-Dev" ] &&
+    [ "$mysqlV" != "MariaDB-5.5" ] &&
+    [ "$mysqlV" != "MariaDB-10.0" ] &&
+    [ "$mysqlV" != "MariaDB-10.1" ] &&
+    [ "$mysqlV" != "Exit" ]; then
         selectMySQL;
     fi;
 }
 
 ## 选择 PHP 版本
 function selectPHP() {
-    echo "[Notice] Please select PHP Version: ";
-    select phpV in "PHP-5.5" "PHP-5.6" "PHP-7.0-RC" "Exit"; do
+    echo "[Notice] Please select PHP version: ";
+    select phpV in "PHP-5.5" "PHP-5.6" "PHP-7.0" "Exit"; do
         break;
     done;
 
     [ "$phpV" == "Exit" ] && exit;
 
-    if [ "$phpV" != "PHP-5.5" ] && [ "$phpV" != "PHP-5.6" ] && [ "$phpV" != "PHP-7.0-RC" ] && [ "$phpV" != "Exit" ]; then
+    if [ "$phpV" != "PHP-5.5" ] && [ "$phpV" != "PHP-5.6" ] && [ "$phpV" != "PHP-7.0" ] && [ "$phpV" != "Exit" ]; then
         selectPHP;
     fi;
 }
 
 ## 选择 Nginx 版本
 function selectNginx() {
-    echo "[Notice] Please select Nginx Version: ";
+    echo "[Notice] Please select Nginx version: ";
     select nginxV in "Nginx-1.8" "Nginx-1.9-Dev" "Exit"; do
         break;
     done;
@@ -133,6 +144,20 @@ function selectNginx() {
 
     if [ "$nginxV" != "Nginx-1.8" ] && [ "$nginxV" != "Nginx-1.9-Dev" ] && [ "$nginxV" != "Exit" ]; then
         selectNginx;
+    fi;
+}
+
+## 选择数据库管理工具
+function selectDBMGT() {
+    echo "[Notice] Please select database management tool version: ";
+    select dbV in "phpMyAdmin" "Adminer" "No need" "Exit"; do
+        break;
+    done;
+
+    [ "$dbV" == "Exit" ] && exit;
+
+    if [ "$dbV" != "phpMyAdmin" ] && [ "$dbV" != "Adminer" ] && [ "$dbV" != "No need" ] && [ "$dbV" != "Exit" ]; then
+        selectDBMGT;
     fi;
 }
 
@@ -178,7 +203,7 @@ function InstallReady() {
 
     time=`date +%s`;
     mkdir -p /etc/yum.repos.d/bak.$time/;
-    mv -bfu /etc/yum.repos.d/{epel*,mysql*,remi*,nginx*} /etc/yum.repos.d/bak.$time/ >& /dev/null;
+    mv -bfu /etc/yum.repos.d/{epel*,mysql*,mariadb*,remi*,nginx*} /etc/yum.repos.d/bak.$time/ >& /dev/null;
 
     #yum upgrade -y;
 }
@@ -190,6 +215,7 @@ function InstallService() {
 
     if [ "$freeV" == "Yes" ]; then
         mysqlRepoUrl=$mysqlCDNUrl;
+        mariaDBRepoUrl=$mariaDBCDNUrl;
         phpRepoUrl=$phpCDNUrl;
         nginxRepoUrl=$nginxCDNUrl;
 
@@ -199,6 +225,7 @@ function InstallService() {
         wget -c --tries=3 -O /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-7.repo;
     else
         mysqlRepoUrl=$mysqlUrl;
+        mariaDBRepoUrl=$mariaDBUrl;
         phpRepoUrl=$phpUrl;
         nginxRepoUrl=$nginxUrl;
     fi;
@@ -221,14 +248,26 @@ function InstallService() {
         sed -i "/yum\/mysql\-5\.5/{n;s/enabled=0/enabled=1/g}" $mysqlRepo;
         sed -i "/yum\/mysql\-5\.6/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
         sed -i "/yum\/mysql\-5\.7/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
+        installDB='mysql';
     elif [ "$mysqlV" == "MySQL-5.6" ]; then
         sed -i "/yum\/mysql\-5\.5/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
         sed -i "/yum\/mysql\-5\.6/{n;s/enabled=0/enabled=1/g}" $mysqlRepo;
         sed -i "/yum\/mysql\-5\.7/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
+        installDB='mysql';
     elif [ "$mysqlV" == "MySQL-5.7-Dev" ]; then
         sed -i "/yum\/mysql\-5\.5/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
         sed -i "/yum\/mysql\-5\.6/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
         sed -i "/yum\/mysql\-5\.7/{n;s/enabled=0/enabled=1/g}" $mysqlRepo;
+        installDB='mysql';
+    elif [ "$mysqlV" == "MariaDB-5.5" ]; then
+        echo "[mariadb]\nname = MariaDB\nbaseurl = ${mariaDBRepoUrl}/5.5/centos7-amd64\ngpgkey=${mariaDBRepoUrl}/RPM-GPG-KEY-MariaDB\ngpgcheck=1" > /etc/yum.repos.d/mariadb.repo;
+        installDB='mariadb';
+    elif [ "$mysqlV" == "MariaDB-10.0" ]; then
+        echo "[mariadb]\nname = MariaDB\nbaseurl = ${mariaDBRepoUrl}/10.0/centos7-amd64\ngpgkey=${mariaDBRepoUrl}/RPM-GPG-KEY-MariaDB\ngpgcheck=1" > /etc/yum.repos.d/mariadb.repo;
+        installDB='mariadb';
+    elif [ "$mysqlV" == "MariaDB-10.1" ]; then
+        echo "[mariadb]\nname = MariaDB\nbaseurl = ${mariaDBRepoUrl}/10.1/centos7-amd64\ngpgkey=${mariaDBRepoUrl}/RPM-GPG-KEY-MariaDB\ngpgcheck=1" > /etc/yum.repos.d/mariadb.repo;
+        installDB='mariadb';
     fi;
 
     phpRepo=/etc/yum.repos.d/remi.repo;
@@ -260,7 +299,7 @@ function InstallService() {
         sed -i "/php55\/mirror/{n;n;s/enabled=1/enabled=0/g}" $phpRepo;
         sed -i "/php56\/mirror/{n;n;s/enabled=0/enabled=1/g}" $phpRepo;
         sed -i "/php70\/mirror/{n;s/enabled=1/enabled=0/g}" $php7Repo;
-    elif [ "$phpV" == "PHP-7.0-RC" ]; then
+    elif [ "$phpV" == "PHP-7.0" ]; then
         sed -i "/php55\/mirror/{n;n;s/enabled=1/enabled=0/g}" $phpRepo;
         sed -i "/php56\/mirror/{n;n;s/enabled=1/enabled=0/g}" $phpRepo;
         sed -i "/php70\/mirror/{n;s/enabled=0/enabled=1/g}" $php7Repo;
@@ -279,7 +318,23 @@ function InstallService() {
     yum clean all;
     yum makecache;
 
-    yum install -y mysql-community-server nginx php php-bcmath php-fpm php-gd php-json php-mbstring php-mcrypt php-mysqlnd php-opcache php-pdo php-pdo_dblib php-pgsql php-recode php-snmp php-soap php-xml php-pecl-zip phpMyAdmin;
+    if [ "$installDB" == "mysql" ]; then
+        yum install -y mysql-community-server;
+        sed -i "s@/var/lib/mysql@/home/userdata@g" /etc/my.cnf;
+        echo -e "\n[client]\nsocket = /home/userdata/mysqld.sock" >> /etc/my.cnf;
+
+        if [ "$mysqlV" != "MySQL-5.7-Dev" ]; then
+            mysql_install_db --user=mysql;
+        else
+            mysqld --initialize-insecure --user=mysql;
+        fi;
+    elif [ "$installDB" == "mariadb" ]; then
+        yum install -y MariaDB-server MariaDB-client;
+        mycnf='[client]\nport = 3306\nsocket = /home/userdata/mysqld.sock\n[mysqld]\ndatadir = /home/userdata\nsocket = /home/userdata/mysqld.sock\nlog-basename = mysqld\nlog-error = /home/userdata/mysqld.log\ngeneral-log\ngeneral-log-file = /home/userdata/mysqld-general.log\nslow-query-log\nslow-query-log-file = /home/userdata/mysqld-slow.log\npid-file = /home/userdata/mysqld.pid\n';
+        sed -i "s@[client-server]@${mycnf}@g" /etc/my.cnf;
+    fi;
+
+    yum install -y nginx php php-bcmath php-fpm php-gd php-json php-mbstring php-mcrypt php-mysqlnd php-opcache php-pdo php-pdo_dblib php-recode php-snmp php-soap php-xml php-pecl-zip;
 }
 
 ## 配置服务
@@ -294,32 +349,26 @@ function ConfigService() {
     mv -bfu /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak;
     mv -bfu /etc/nginx/fastcgi_params /etc/nginx/fastcgi_params.bak;
 
-    mkdir -p /etc/phpMyAdmin/oldbak;
-    mv -bfu /etc/phpMyAdmin/config.inc.php /etc/phpMyAdmin/oldbak;
-
     cp -a etc/* /etc/;
 
     chmod +x /etc/rc.d/init.d/vbackup;
     chmod +x /etc/rc.d/init.d/vhost;
 
-    newHash=`echo -n $RANDOM  | md5sum | sed "s/ .*//" | cut -b -18`;
-    sed -i "s/739174021564331540/${newHash}/g" /etc/phpMyAdmin/config.inc.php;
-
     sed -i "s/localhost/${ipAddress}/g" /etc/nginx/conf.d/nginx-index.conf;
 
     mkdir -p /home/{wwwroot,userdata};
     cp -a home/wwwroot/index /home/wwwroot/;
-    cp -a /usr/share/phpMyAdmin /home/wwwroot/index/;
-    rm -rf /home/wwwroot/index/phpMyAdmin/doc/html;
-    cp -a /usr/share/doc/phpMyAdmin-*/html /home/wwwroot/index/phpMyAdmin/doc/;
 
-    sed -i "s@/var/lib/mysql@/home/userdata@g" /etc/my.cnf;
-    echo -e "\n[client]\nsocket = /home/userdata/mysql.sock" >> /etc/my.cnf;
-
-    if [ "$mysqlV" != "MySQL-5.7-Dev" ]; then
-        mysql_install_db --user=mysql;
-    else
-        mysqld --initialize-insecure --user=mysql;
+    if [ "$dbV" == "phpMyAdmin" ]; then
+        yum install -y phpMyAdmin;
+        newHash=`echo -n $RANDOM  | md5sum | sed "s/ .*//" | cut -b -18`;
+        sed -i "s/739174021564331540/${newHash}/g" /etc/phpMyAdmin/config.inc.php;
+        cp -a /usr/share/phpMyAdmin /home/wwwroot/index/;
+        rm -rf /home/wwwroot/index/phpMyAdmin/doc/html;
+        cp -a /usr/share/doc/phpMyAdmin-*/html /home/wwwroot/index/phpMyAdmin/doc/;
+    elif [ "$dbV" == "Adminer" ]; then
+        cp -a DBMGT/Adminer /home/wwwroot/index/;
+        sed -i "s/phpMyAdmin/Adminer/g" /home/wwwroot/index/index.html;
     fi;
 
     groupadd www;
