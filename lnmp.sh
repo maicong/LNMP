@@ -250,17 +250,17 @@ function InstallService() {
             sed -i "/yum\/mysql\-5\.5/{n;s/enabled=0/enabled=1/g}" $mysqlRepo;
             sed -i "/yum\/mysql\-5\.6/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
             sed -i "/yum\/mysql\-5\.7/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
-            installDB='mysql';
+            installDB='mysqld';
         elif [ "$mysqlV" == "MySQL-5.6" ]; then
             sed -i "/yum\/mysql\-5\.5/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
             sed -i "/yum\/mysql\-5\.6/{n;s/enabled=0/enabled=1/g}" $mysqlRepo;
             sed -i "/yum\/mysql\-5\.7/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
-            installDB='mysql';
+            installDB='mysqld';
         elif [ "$mysqlV" == "MySQL-5.7-Dev" ]; then
             sed -i "/yum\/mysql\-5\.5/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
             sed -i "/yum\/mysql\-5\.6/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
             sed -i "/yum\/mysql\-5\.7/{n;s/enabled=0/enabled=1/g}" $mysqlRepo;
-            installDB='mysql';
+            installDB='mysqld';
         fi;
     else
         if [ "$mysqlV" == "MariaDB-5.5" ]; then
@@ -323,7 +323,7 @@ function InstallService() {
     yum clean all;
     yum makecache;
 
-    if [ "$installDB" == "mysql" ]; then
+    if [ "$installDB" == "mysqld" ]; then
         yum install -y mysql-community-server;
         sed -i "s@/var/lib/mysql@/home/userdata@g" /etc/my.cnf;
         echo -e "\n[client]\nsocket = /home/userdata/mysqld.sock" >> /etc/my.cnf;
@@ -336,6 +336,7 @@ function InstallService() {
     elif [ "$installDB" == "mariadb" ]; then
         yum install -y MariaDB-server MariaDB-client;
         sed -i "s@\[client-server\]@\[client\]\nport = 3306\nsocket = /home/userdata/mysqld.sock\n\n[mysqld]\ndatadir = /home/userdata\nsocket = /home/userdata/mysqld.sock\nlog-basename = mysqld\nlog-error = /home/userdata/mysqld.log\ngeneral-log\ngeneral-log-file = /home/userdata/mysqld-general.log\nslow-query-log\nslow-query-log-file = /home/userdata/mysqld-slow.log\npid-file = /home/userdata/mysqld.pid\n@g" /etc/my.cnf;
+        mysql_install_db --user=mysql;
     fi;
 
     yum install -y nginx php php-bcmath php-fpm php-gd php-json php-mbstring php-mcrypt php-mysqlnd php-opcache php-pdo php-pdo_dblib php-recode php-snmp php-soap php-xml php-pecl-zip;
@@ -385,7 +386,7 @@ function ConfigService() {
 ## 启动服务
 function StartService() {
     echo "[Notice] Start service ... ";
-    systemctl enable mysqld.service;
+    systemctl enable ${installDB}.service;
     systemctl enable php-fpm.service;
     systemctl enable nginx.service;
     systemctl enable firewalld.service;
@@ -396,7 +397,7 @@ function StartService() {
     firewall-cmd --permanent --zone=public --add-service=https;
     firewall-cmd --reload;
 
-    systemctl start mysqld.service;
+    systemctl start ${installDB}.service;
     systemctl start php-fpm.service;
     systemctl start nginx.service;
 
@@ -404,6 +405,7 @@ function StartService() {
     mysqladmin -u root -p"$mysqlPWD" -h $(hostname) password "$mysqlPWD";
     mysql -u root -p"$mysqlPWD" -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');DELETE FROM mysql.user WHERE User='';DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';FLUSH PRIVILEGES;";
     rm -rf /home/userdata/test;
+    echo $mysqlPWD > /home/userdata/initialPWD.txt;
 
     InstallCompleted;
 }
@@ -417,9 +419,17 @@ function InstallCompleted() {
         echo -e "\033[34m WebDir: \033[0m /home/wwwroot/";
         echo -e "\033[34m Nginx: \033[0m /etc/nginx/";
         echo -e "\033[34m PHP: \033[0m /etc/php-fpm.d/";
-        echo -e "\033[34m MySQL Data: \033[0m /home/userdata/";
-        echo -e "\033[34m MySQL User: \033[0m root";
-        echo -e "\033[34m MySQL Password: \033[0m ${mysqlPWD}";
+
+        if [ "$installDB" == "mysqld" ]; then
+            echo -e "\033[34m MySQL Data: \033[0m /home/userdata/";
+            echo -e "\033[34m MySQL User: \033[0m root";
+            echo -e "\033[34m MySQL Password: \033[0m ${mysqlPWD}";
+        elif [ "$installDB" == "mariadb" ]; then
+            echo -e "\033[34m MariaDB Data: \033[0m /home/userdata/";
+            echo -e "\033[34m MariaDB User: \033[0m root";
+            echo -e "\033[34m MariaDB Password: \033[0m ${mysqlPWD}";
+        fi;
+
         echo -e "\033[34m Host Management: \033[0m service vhost (start,stop,list,add,edit,del,exit) <domain> <server_name> <index_name> <rewrite_file> <host_subdirectory>";
         echo "Start time: $startDate";
         echo "Completion time: $(date) (Use: $[($(date +%s)-startDateSecond)/60] minute)";
