@@ -53,7 +53,7 @@ function ConfirmInstall() {
         rm -rf /etc/my.cnf*;
         rm -rf /home/userdata;
         rm -rf /home/wwwroot;
-        userdel www;
+        userdel -r www;
         yum clean all;
         exit;
     elif [ "$lnmpDo" == "Upgrade" ]; then
@@ -376,7 +376,7 @@ function ConfigService() {
     fi;
 
     groupadd www;
-    useradd -s /sbin/nologin -g www;
+    useradd -m -s /sbin/nologin -g www www;
 
     chown www:www -R /home/wwwroot;
     chown mysql:mysql -R /home/userdata;
