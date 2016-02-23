@@ -51,6 +51,7 @@ function ConfirmInstall() {
         rm -rf /etc/my.cnf.d;
         rm -rf /etc/php*;
         rm -rf /etc/my.cnf*;
+        rm -rf /etc/yum.repos.d/mariadb.repo;
         rm -rf /home/userdata;
         rm -rf /home/wwwroot;
         userdel -r www;
@@ -325,9 +326,11 @@ function InstallService() {
     if [ "$installDB" == "mysqld" ]; then
         yum install -y mysql-community-server;
         sed -i "s@/var/lib/mysql@/home/userdata@g" /etc/my.cnf;
+        sed -i "s@mysql.sock@mysqld.sock@g" /etc/my.cnf;
         echo -e "\n[client]\nsocket = /home/userdata/mysqld.sock" >> /etc/my.cnf;
 
         if [ "$mysqlV" != "MySQL-5.7-Dev" ]; then
+            sed -i "s@mysqld.sock@mysqld.sock\nexplicit_defaults_for_timestamp@g" /etc/my.cnf;
             mysql_install_db --user=mysql;
         else
             mysqld --initialize-insecure --user=mysql;
