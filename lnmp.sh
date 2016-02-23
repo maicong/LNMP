@@ -330,7 +330,7 @@ function InstallService() {
         echo -e "\n[client]\nsocket = /home/userdata/mysqld.sock" >> /etc/my.cnf;
 
         if [ "$mysqlV" != "MySQL-5.7-Dev" ]; then
-            [ "$mysqlV" != "MySQL-5.6" ] && \
+            [ "$mysqlV" == "MySQL-5.6" ] && \
             sed -i "s@symbolic-links=0@symbolic-links=0\nexplicit_defaults_for_timestamp@g" /etc/my.cnf;
             mysql_install_db --user=mysql;
         else
