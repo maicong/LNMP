@@ -209,7 +209,7 @@ service vbackup del c7-20151010-101010.tar.gz
 
 ## 8、示例图
 
-![](http://i13.tietuku.com/65bbbe289d44a5d0.png)
+![](http://i13.tietuku.com/1b0ce6885457c95b.png)
 
 ![](http://i13.tietuku.com/184a2be1381e39a5.png)
 
