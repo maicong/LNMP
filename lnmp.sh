@@ -330,7 +330,8 @@ function InstallService() {
         echo -e "\n[client]\nsocket = /home/userdata/mysqld.sock" >> /etc/my.cnf;
 
         if [ "$mysqlV" != "MySQL-5.7-Dev" ]; then
-            sed -i "s@mysqld.sock@mysqld.sock\nexplicit_defaults_for_timestamp@g" /etc/my.cnf;
+            [ "$mysqlV" != "MySQL-5.6" ] && \
+            sed -i "s@symbolic-links=0@symbolic-links=0\nexplicit_defaults_for_timestamp@g" /etc/my.cnf;
             mysql_install_db --user=mysql;
         else
             mysqld --initialize-insecure --user=mysql;
