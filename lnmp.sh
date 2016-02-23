@@ -376,7 +376,7 @@ function ConfigService() {
     fi;
 
     groupadd www;
-    useradd -m -s /sbin/nologin -g www www;
+    useradd -s /sbin/nologin -g www;
 
     chown www:www -R /home/wwwroot;
     chown mysql:mysql -R /home/userdata;
