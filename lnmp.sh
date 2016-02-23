@@ -230,44 +230,49 @@ function InstallService() {
         nginxRepoUrl=$nginxUrl;
     fi;
 
-    rpm --import mysql_pubkey.asc;
     rpm --import ${phpRepoUrl}/RPM-GPG-KEY-remi;
     rpm --import ${nginxRepoUrl}/packages/keys/nginx_signing.key;
 
-    rpm -Uvh ${mysqlRepoUrl}/mysql-community-release-el7-5.noarch.rpm;
     rpm -Uvh ${phpRepoUrl}/enterprise/remi-release-7.rpm;
     rpm -Uvh ${nginxRepoUrl}/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm;
 
-    mysqlRepo=/etc/yum.repos.d/mysql-community.repo;
-    mysqlRepoS=/etc/yum.repos.d/mysql-community-source.repo;
+    if [ "$mysqlV" == "MySQL-5.5" ] || [ "$mysqlV" == "MySQL-5.6" ] || [ "$mysqlV" == "MySQL-5.7-Dev" ]; then
+        rpm --import mysql_pubkey.asc;
+        rpm -Uvh ${mysqlRepoUrl}/mysql-community-release-el7-5.noarch.rpm;
 
-    sed -i "s@${mysqlUrl}@${mysqlRepoUrl}@g" $mysqlRepo;
-    sed -i "s@${mysqlUrl}@${mysqlRepoUrl}@g" $mysqlRepoS;
+        mysqlRepo=/etc/yum.repos.d/mysql-community.repo;
+        mysqlRepoS=/etc/yum.repos.d/mysql-community-source.repo;
 
-    if [ "$mysqlV" == "MySQL-5.5" ]; then
-        sed -i "/yum\/mysql\-5\.5/{n;s/enabled=0/enabled=1/g}" $mysqlRepo;
-        sed -i "/yum\/mysql\-5\.6/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
-        sed -i "/yum\/mysql\-5\.7/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
-        installDB='mysql';
-    elif [ "$mysqlV" == "MySQL-5.6" ]; then
-        sed -i "/yum\/mysql\-5\.5/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
-        sed -i "/yum\/mysql\-5\.6/{n;s/enabled=0/enabled=1/g}" $mysqlRepo;
-        sed -i "/yum\/mysql\-5\.7/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
-        installDB='mysql';
-    elif [ "$mysqlV" == "MySQL-5.7-Dev" ]; then
-        sed -i "/yum\/mysql\-5\.5/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
-        sed -i "/yum\/mysql\-5\.6/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
-        sed -i "/yum\/mysql\-5\.7/{n;s/enabled=0/enabled=1/g}" $mysqlRepo;
-        installDB='mysql';
-    elif [ "$mysqlV" == "MariaDB-5.5" ]; then
-        echo "[mariadb]\nname = MariaDB\nbaseurl = ${mariaDBRepoUrl}/5.5/centos7-amd64\ngpgkey=${mariaDBRepoUrl}/RPM-GPG-KEY-MariaDB\ngpgcheck=1" > /etc/yum.repos.d/mariadb.repo;
-        installDB='mariadb';
-    elif [ "$mysqlV" == "MariaDB-10.0" ]; then
-        echo "[mariadb]\nname = MariaDB\nbaseurl = ${mariaDBRepoUrl}/10.0/centos7-amd64\ngpgkey=${mariaDBRepoUrl}/RPM-GPG-KEY-MariaDB\ngpgcheck=1" > /etc/yum.repos.d/mariadb.repo;
-        installDB='mariadb';
-    elif [ "$mysqlV" == "MariaDB-10.1" ]; then
-        echo "[mariadb]\nname = MariaDB\nbaseurl = ${mariaDBRepoUrl}/10.1/centos7-amd64\ngpgkey=${mariaDBRepoUrl}/RPM-GPG-KEY-MariaDB\ngpgcheck=1" > /etc/yum.repos.d/mariadb.repo;
-        installDB='mariadb';
+        sed -i "s@${mysqlUrl}@${mysqlRepoUrl}@g" $mysqlRepo;
+        sed -i "s@${mysqlUrl}@${mysqlRepoUrl}@g" $mysqlRepoS;
+
+        if [ "$mysqlV" == "MySQL-5.5" ]; then
+            sed -i "/yum\/mysql\-5\.5/{n;s/enabled=0/enabled=1/g}" $mysqlRepo;
+            sed -i "/yum\/mysql\-5\.6/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
+            sed -i "/yum\/mysql\-5\.7/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
+            installDB='mysql';
+        elif [ "$mysqlV" == "MySQL-5.6" ]; then
+            sed -i "/yum\/mysql\-5\.5/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
+            sed -i "/yum\/mysql\-5\.6/{n;s/enabled=0/enabled=1/g}" $mysqlRepo;
+            sed -i "/yum\/mysql\-5\.7/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
+            installDB='mysql';
+        elif [ "$mysqlV" == "MySQL-5.7-Dev" ]; then
+            sed -i "/yum\/mysql\-5\.5/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
+            sed -i "/yum\/mysql\-5\.6/{n;s/enabled=1/enabled=0/g}" $mysqlRepo;
+            sed -i "/yum\/mysql\-5\.7/{n;s/enabled=0/enabled=1/g}" $mysqlRepo;
+            installDB='mysql';
+        fi;
+    else
+        if [ "$mysqlV" == "MariaDB-5.5" ]; then
+            echo -e "[mariadb]\nname = MariaDB\nbaseurl = ${mariaDBRepoUrl}/5.5/centos7-amd64\ngpgkey=${mariaDBRepoUrl}/RPM-GPG-KEY-MariaDB\ngpgcheck=1" > /etc/yum.repos.d/mariadb.repo;
+            installDB='mariadb';
+        elif [ "$mysqlV" == "MariaDB-10.0" ]; then
+            echo -e "[mariadb]\nname = MariaDB\nbaseurl = ${mariaDBRepoUrl}/10.0/centos7-amd64\ngpgkey=${mariaDBRepoUrl}/RPM-GPG-KEY-MariaDB\ngpgcheck=1" > /etc/yum.repos.d/mariadb.repo;
+            installDB='mariadb';
+        elif [ "$mysqlV" == "MariaDB-10.1" ]; then
+            echo -e "[mariadb]\nname = MariaDB\nbaseurl = ${mariaDBRepoUrl}/10.1/centos7-amd64\ngpgkey=${mariaDBRepoUrl}/RPM-GPG-KEY-MariaDB\ngpgcheck=1" > /etc/yum.repos.d/mariadb.repo;
+            installDB='mariadb';
+        fi;
     fi;
 
     phpRepo=/etc/yum.repos.d/remi.repo;
