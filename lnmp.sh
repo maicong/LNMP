@@ -432,7 +432,7 @@ function InstallCompleted() {
         echo -e "\033[34m Host Management: \033[0m service vhost (start,stop,list,add,edit,del,exit) <domain> <server_name> <index_name> <rewrite_file> <host_subdirectory>";
         echo "Start time: $startDate";
         echo "Completion time: $(date) (Use: $[($(date +%s)-startDateSecond)/60] minute)";
-        echo "More help please visit: https://maicong.me/2015-09-23-mc-lnmp.html";
+        echo "More help please visit: https://github.com/maicong/LNMP";
         echo "================================================================";
     else
         echo -e "\033[41m [LNMP] Sorry, Install Failed. \033[0m";
