@@ -335,8 +335,7 @@ function InstallService() {
         fi;
     elif [ "$installDB" == "mariadb" ]; then
         yum install -y MariaDB-server MariaDB-client;
-        mycnf='[client]\nport = 3306\nsocket = /home/userdata/mysqld.sock\n[mysqld]\ndatadir = /home/userdata\nsocket = /home/userdata/mysqld.sock\nlog-basename = mysqld\nlog-error = /home/userdata/mysqld.log\ngeneral-log\ngeneral-log-file = /home/userdata/mysqld-general.log\nslow-query-log\nslow-query-log-file = /home/userdata/mysqld-slow.log\npid-file = /home/userdata/mysqld.pid\n';
-        sed -i "s@[client-server]@${mycnf}@g" /etc/my.cnf;
+        sed -i "s@\[client-server\]@\[client\]\nport = 3306\nsocket = /home/userdata/mysqld.sock\n\n[mysqld]\ndatadir = /home/userdata\nsocket = /home/userdata/mysqld.sock\nlog-basename = mysqld\nlog-error = /home/userdata/mysqld.log\ngeneral-log\ngeneral-log-file = /home/userdata/mysqld-general.log\nslow-query-log\nslow-query-log-file = /home/userdata/mysqld-slow.log\npid-file = /home/userdata/mysqld.pid\n@g" /etc/my.cnf;
     fi;
 
     yum install -y nginx php php-bcmath php-fpm php-gd php-json php-mbstring php-mcrypt php-mysqlnd php-opcache php-pdo php-pdo_dblib php-recode php-snmp php-soap php-xml php-pecl-zip;
