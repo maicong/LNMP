@@ -42,9 +42,10 @@ function ConfirmInstall() {
         read -p '[Notice] Are you sure? (y/n) : ' confirmYN;
         [ "$confirmYN" != 'y' ] && exit;
         echo "[Notice] Uninstalling... ";
-        systemctl stop mysqld.service;
-        systemctl stop php-fpm.service;
-        systemctl stop nginx.service;
+        pgrep mysql | xargs -r kill;
+        pgrep php | xargs -r kill;
+        pgrep nginx | xargs -r kill;
+        pgrep -u www | xargs -r kill;
         yum autoremove -y epel* epel-* mysql* mysql-* MariaDB-* httpd* httpd-* nginx* nginx-* php* php-* remi* remi-*;
         rm -rf /etc/nginx;
         rm -rf /etc/my.cnf.d;
@@ -52,9 +53,7 @@ function ConfirmInstall() {
         rm -rf /etc/my.cnf*;
         rm -rf /home/userdata;
         rm -rf /home/wwwroot;
-        ps -ef | grep "www" | grep -v grep | awk '{ print $2 }' | uniq | xargs kill -9;
-        userdel -r www;
-        groupdel www;
+        userdel www;
         yum clean all;
         exit;
     elif [ "$lnmpDo" == "Upgrade" ]; then

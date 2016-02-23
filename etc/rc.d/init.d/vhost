@@ -255,8 +255,8 @@ elif [ "$selected" == 'stop' ]; then
     phpConfNum=`ls $php_fpm_EDIR | egrep "*.conf" | wc -l`;
     nginxConfNum=`ls $nginx_EDIR | egrep "*.conf" | wc -l`;
 
-    [ "$phpConfNum" == "0" ] && `pgrep php-fpm | xargs kill &>/dev/null`;
-    [ "$nginxConfNum" == "0" ] && `pgrep nginx | xargs kill &>/dev/null`;
+    [ "$phpConfNum" == "0" ] && `pgrep php-fpm | xargs -r kill`;
+    [ "$nginxConfNum" == "0" ] && `pgrep nginx | xargs -r kill`;
 
     exit;
 
