@@ -1,7 +1,7 @@
 CentOS 7 YUM 安装 LNMP 环境
 =======
 
-CentOS 7 YUM Installation: Nginx 1.8/1.9 + MySQL 5.5/5.6/5.7 + PHP 5.5/5.6/7.0
+CentOS 7 YUM Installation: Nginx 1.8/1.9 + MySQL 5.5/5.6/5.7(MariaDB 5.5/10.0/10.1) + PHP 5.5/5.6/7.0 + phpMyAdmin(Adminer)
 
 ## 1、主要目录
 
@@ -9,9 +9,9 @@ CentOS 7 YUM Installation: Nginx 1.8/1.9 + MySQL 5.5/5.6/5.7 + PHP 5.5/5.6/7.0
 
 备份： `/home/backup/`
 
-MySQL 数据： `/home/userdata/`
+MySQL、MariaDB 数据： `/home/userdata/`
 
-MySQL 配置： `/etc/my.cnf.d/`
+MySQL、MariaDB 配置： `/etc/my.cnf`、`/etc/my.cnf.d/`
 
 Nginx 配置(启用)： `/etc/nginx/conf.d/`
 
@@ -29,26 +29,35 @@ SVN 配置： `/var/svn/repos/`
 
 ***建议安装 CentOS 7 Minimal (最小化安装) 后再使用本脚本安装环境***
 
-```
-# 安装 wget 和 unzip
+```bash
+## 一键安装命令
+yum install -y wget unzip && wget https://git.io/v2OPx && unzip master.zip && cd LNMP-master && bash lnmp.sh
+
+
+## 分步骤安装命令
+
+# 1、安装 wget 和 unzip
 yum install -y wget unzip
 
-# 下载安装包
+# 2、下载并解压安装包
 wget https://github.com/maicong/LNMP/archive/master.zip
 
-# 解压安装包
-unzip master.zip && cd LNMP-master
+# 3、解压安装包
+unzip master.zip
 
-# 执行安装命令
+# 4、进入安装包目录
+cd LNMP-master
+
+# 5、执行安装命令
 bash lnmp.sh
 
-# 如果想查看安装日志，可以将 log 输出到指定文件
+# 如果想保存安装日志，请将 log 输出到指定文件
 # bash lnmp.sh 2>&1 | tee lnmp.log
 ```
 
 ## 3、服务管理
 
-```
+```bash
 # 启动 MySQL
 systemctl start mysqld.service
 
@@ -57,6 +66,15 @@ systemctl stop mysqld.service
 
 # 重启 MySQL
 systemctl restart mysqld.service
+
+# 启动 MariaDB
+systemctl start mariadb.service
+
+# 停止 MariaDB
+systemctl stop mariadb.service
+
+# 重启 MariaDB
+systemctl restart mariadb.service
 
 # 启动 PHP
 systemctl start php-fpm.service
@@ -88,7 +106,7 @@ systemctl restart svnserve.service
 
 ## 4、站点管理
 
-```
+```bash
 service vhost (start,stop,list,add,edit,del,exit) <domain> <server_name> <index_name> <rewrite_file> <host_subdirectory>
 ```
 
@@ -120,7 +138,7 @@ service vhost (start,stop,list,add,edit,del,exit) <domain> <server_name> <index_
 
 #### 参数示例
 
-```
+```bash
 # 添加一个标识为 `mysite`，域名为 `mysite.com` 的站点
 service vhost add mysite mysite.com
 
@@ -144,7 +162,7 @@ service vhost list
 
 ***项目名称请和站点标识保持一致，不然无法正常 checkout***
 
-```
+```bash
 # SVN 安装命令
 bash svn.sh
 ```
@@ -152,7 +170,7 @@ bash svn.sh
 
 ## 6、伪静态文件
 
-```
+```bash
 # 增加一个 `wordpress` 伪静态文件
 touch /etc/nginx/rewrite/wordpress.conf
 
@@ -162,7 +180,7 @@ service vhost edit mysite mysite.com,www.mysite.com index.html,index.php,default
 
 ## 7、备份
 
-```
+```bash
 service vbackup (start,list,del) <delete name.tar.gz>
 ```
 
@@ -173,12 +191,12 @@ service vbackup (start,list,del) <delete name.tar.gz>
  - `list` 列出
 
  - `del` 删除
- 
+
  - `<delete name.tar.gz> ` 需要删除的备份文件名称，和 `del` 搭配使用，存放在 `/home/backup/`
 
 #### 参数示例
 
-```
+```bash
 # 添加一个新的备份
 service vbackup start
 
