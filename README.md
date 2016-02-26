@@ -31,7 +31,7 @@ SVN 配置： `/var/svn/repos/`
 
 ```bash
 ## 一键安装命令
-yum install -y wget unzip && wget https://git.io/v2OPx && unzip master.zip && cd LNMP-master && bash lnmp.sh
+yum install -y wget unzip && wget https://git.io/v2OPx -O LNMP.zip && unzip LNMP.zip && cd LNMP-master && bash lnmp.sh
 
 
 ## 分步骤安装命令
