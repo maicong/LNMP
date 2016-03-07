@@ -361,6 +361,7 @@ function ConfigService() {
 
     chmod +x /etc/rc.d/init.d/vbackup;
     chmod +x /etc/rc.d/init.d/vhost;
+    chmod +x /etc/rc.d/init.d/svnserve;
 
     sed -i "s/localhost/${ipAddress}/g" /etc/nginx/conf.d/nginx-index.conf;
 

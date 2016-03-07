@@ -1,0 +1,44 @@
+#!/bin/bash
+#
+## Backup LNMP data
+##
+## CentOS 7 YUM Installation: Nginx 1.8/1.9 + MySQL 5.5/5.6/5.7 + PHP 5.5/5.6/7.0
+## https://github.com/maicong/LNMP
+## Usage: service vbackup (start,list,del) <delete name.tar.gz>
+
+# Sanity check
+[ $(id -g) != "0" ] && die "Script must be run as root.";
+
+showOk(){
+    echo -e "\033[34m[OK]\033[0m $1";
+}
+
+showError(){
+    echo -e "\033[31m[ERROR]\033[0m $1";
+}
+
+showNotice(){
+    echo -e "\033[36m[NOTICE]\033[0m $1";
+}
+
+[ ! -f "/usr/bin/svnserve" ] && showError "Failed to start svnserve: No such file or directory.\nPlease run: \033[36myum install subversion\033[0m" && exit;
+
+case "$1" in
+    start)
+        showNotice "Starting svnserve..."
+        /usr/bin/svnserve -d --listen-port 3690 -r /var/svn/
+        showOk "Successfully start svnserve";
+        ;;
+    stop)
+        showNotice "Stoping svnserve..."
+        pgrep svnserve | xargs -r kill
+        showOk "Successfully stop svnserve"
+        ;;
+    restart)
+        $0 stop
+        $0 start
+        ;;
+    *)
+        echo "Usage: svn { start | stop | restart } "
+        exit 1
+esac

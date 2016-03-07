@@ -15,6 +15,15 @@ echo "https://github.com/maicong/LNMP";
 echo "Usage: bash svn.sh";
 echo "================================================================";
 
+if [ "$*" != '' ]; then
+    selected=$1;
+else
+    echo "[Notice] Please select: "
+    select selected in 'Install' 'Uninstall' 'Exit'; do
+        break;
+    done;
+fi;
+
 project='';
 projectPath='';
 webPath='';
@@ -86,7 +95,14 @@ function InputWebPath()
 ## 安装 SVN
 function InstallSVN()
 {
-    [ $(rpm -qa subversion | wc -l) == "0" ] && yum install subversion -y;
+    SVN_VSESION=$(rpm -qa --queryformat "%{VERSION}" subversion);
+    if [ $(expr "$SVN_VSESION" \< "1.9") == "1" ]; then
+        echo -e "[WandiscoSVN]\nname=Wandisco SVN Repo\nbaseurl=http://opensource.wandisco.com/centos/\$releasever/svn-1.9/RPMS/\$basearch/\nenabled=0\ngpgcheck=0\n" > /etc/yum.repos.d/wandisco-svn.repo;
+        yum autoremove subversion subversion-libs -y;
+        yum install subversion -y --enablerepo WandiscoSVN;
+    else
+        [ $(rpm -qa subversion | wc -l) == "0" ] && yum install subversion -y;
+    fi;
 
     svnadmin create ${projectPath};
 
@@ -130,7 +146,13 @@ EOF
     firewall-cmd --permanent --zone=public --add-port=3690/tcp;
     firewall-cmd --reload;
 
-    systemctl enable svnserve.service
+    if [ ! -f "/usr/lib/systemd/system/svnserve.service" ]; then
+        DIR="$(cd "$(dirname "$0")" && pwd)";
+        cp ${DIR}/svnserve/svnserve /etc/sysconfig/;
+        cp ${DIR}/svnserve/svnserve.service /usr/lib/systemd/system/;
+    fi;
+
+    systemctl enable svnserve.service;
 }
 
 ## 安装完成
@@ -151,8 +173,27 @@ function InstallCompleted()
     fi;
 }
 
-InputIP;
-InputName;
-InputWebPath;
-InstallSVN;
-InstallCompleted;
+## 卸载
+function Uninstall() {
+    yum autoremove subversion subversion-libs -y;
+    pgrep svnserve | xargs -r kill;
+    rm -rf /etc/sysconfig/svnserve;
+    rm -rf /usr/lib/systemd/system/svnserve.service;
+    rm -rf /etc/systemd/system/multi-user.target.wants/svnserve.service;
+    rm -rf /etc/yum.repos.d/wandisco-svn.repo;
+    echo -e "\033[42m [NOTICE] \033[0m Uninstall successful! The repository directory is \033[34m/var/svn/repos/\033[0m , You can delete it.";
+}
+
+if [ "$selected" == 'Install' ]; then
+    InputIP;
+    InputName;
+    InputWebPath;
+    InstallSVN;
+    InstallCompleted;
+elif [ "$selected" == 'Uninstall' ]; then
+    read -p '[Notice] Are you sure? (y/n) : ' confirmYN;
+    [ "$confirmYN" != 'y' ] && exit;
+    Uninstall;
+else
+    exit;
+fi;
