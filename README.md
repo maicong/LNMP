@@ -25,6 +25,8 @@ phpMyAdmin 配置： `/etc/phpMyAdmin/`
 
 SVN 配置： `/var/svn/repos/`
 
+数据库 root 默认密码：`cat /home/userdata/initialPWD.txt`
+
 ## 2、安装
 
 ***建议安装 CentOS 7 Minimal (最小化安装) 后再使用本脚本安装环境***
