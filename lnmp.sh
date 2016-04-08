@@ -338,7 +338,7 @@ clear
         rm -rf /home/userdata/test
         echo "$mysqlPWD" > /home/userdata/initialPWD.txt
 
-        if [[ -f "/usr/sbin/mysql" && -f "/usr/sbin/php-fpm" && -f "/usr/sbin/nginx" ]]; then
+        if [[ -f "/usr/sbin/mysqld" && -f "/usr/sbin/php-fpm" && -f "/usr/sbin/nginx" ]]; then
             echo "================================================================"
             echo -e "\033[42m [LNMP] Install completed. \033[0m"
             echo -e "\033[34m WebSite: \033[0m http://$ipAddress"
