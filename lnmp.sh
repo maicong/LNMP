@@ -21,7 +21,6 @@ dbV=''
 startDate=''
 startDateSecond=''
 installDB=''
-shellPath=$(cd "$(dirname "$0")" && pwd)
 ipAddress=$(ip addr | egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | egrep -v "^192\.168|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-2]\.|^10\.|^127\.|^255\." | head -n 1)
 mysqlPWD=$(echo -n $RANDOM  | md5sum | sed "s/ .*//" | cut -b -8)
 mysqlUrl='http://repo.mysql.com'
@@ -193,7 +192,7 @@ clear
             esac
             echo -e "[mariadb]\nname = MariaDB\nbaseurl = ${mariaDBRepoUrl}/${mariadbV}/centos7-amd64\ngpgkey=${mariaDBRepoUrl}/RPM-GPG-KEY-MariaDB\ngpgcheck=1" > /etc/yum.repos.d/mariadb.repo
         elif [[ "$mysqlV" = "4" || "$mysqlV" = "5" || "$mysqlV" = "6" ]]; then
-            rpm --import "$shellPath/mysql_pubkey.asc"
+            rpm --import mysql_pubkey.asc
             rpm -Uvh ${mysqlRepoUrl}/mysql-community-release-el7-5.noarch.rpm
             sed -i "s@${mysqlUrl}@${mysqlRepoUrl}@g" "$(find /etc/yum.repos.d/ -name "mysql-community*.repo" -type f)"
             installDB='mysqld'
@@ -287,7 +286,7 @@ clear
         mv -bfu /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak
         mv -bfu /etc/nginx/fastcgi_params /etc/nginx/fastcgi_params.bak
 
-        cp -a "$shellPath/etc/*" /etc/
+        cp -a etc/* /etc/
 
         chmod +x /etc/rc.d/init.d/vbackup
         chmod +x /etc/rc.d/init.d/vhost
@@ -296,10 +295,10 @@ clear
         sed -i "s/localhost/${ipAddress}/g" /etc/nginx/conf.d/nginx-index.conf
 
         mkdir -p /home/{wwwroot,userdata}
-        cp -a "$shellPath/home/wwwroot/index/" /home/wwwroot/
+        cp -a home/wwwroot/index/ /home/wwwroot/
 
         if [[ "$dbV" = "1" ]]; then
-            cp -a "$shellPath/DBMGT/Adminer" /home/wwwroot/index/
+            cp -a DBMGT/Adminer /home/wwwroot/index/
             sed -i "s/phpMyAdmin/Adminer/g" /home/wwwroot/index/index.html
         elif [[ "$dbV" = "2" ]]; then
             yum install -y phpMyAdmin
