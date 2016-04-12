@@ -277,7 +277,7 @@ clear
 
         showNotice "Configurationing"
 
-        curl -o LNMP-dev.zip https://github.com/maicong/LNMP/archive/dev.zip
+        wget -c --tries=3 -O LNMP-dev.zip https://github.com/maicong/LNMP/archive/dev.zip
         unzip LNMP-dev.zip
         cd LNMP-dev || showError "Configuration file not found" && exit;
 
