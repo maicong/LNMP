@@ -249,7 +249,7 @@ runInstall(){
         sed -i "s@symbolic-links=0@symbolic-links=0\nbind-address=0.0.0.0@g" /etc/my.cnf
         echo -e "\n[client]\nsocket=/home/userdata/mysqld.sock" >> /etc/my.cnf
 
-        if [[ "$mysqlV" == "6" ]]; then
+        if [[ "$mysqlV" = "6" ]]; then
             mysqld --initialize-insecure --user=mysql --explicit_defaults_for_timestamp
         else
             mysql_install_db --user=mysql --explicit_defaults_for_timestamp
