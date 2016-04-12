@@ -152,7 +152,7 @@ clear
 
         showNotice 'Installing'
 
-        yum install -y epel-release firewalld yum-utils
+        yum install -y epel-release firewalld yum-utils unzip
 
         mysqlRepoUrl=$mysqlUrl
         mariaDBRepoUrl=$mariaDBUrl
@@ -276,6 +276,10 @@ clear
         yum install -y nginx php php-bcmath php-fpm php-gd php-json php-mbstring php-mcrypt php-mysqlnd php-opcache php-pdo php-pdo_dblib php-recode php-snmp php-soap php-xml php-pecl-zip
 
         showNotice "Configurationing"
+
+        curl -o LNMP-dev.zip https://github.com/maicong/LNMP/archive/dev.zip
+        unzip LNMP-dev.zip
+        cd LNMP-dev || showError "Configuration file not found" && exit;
 
         mkdir -p /etc/php-fpm.d.stop
         mv -bfu /etc/php-fpm.d/* /etc/php-fpm.d.stop/

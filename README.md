@@ -10,29 +10,14 @@ CentOS 7 YUM Installation: Nginx 1.8/1.9 + MySQL 5.5/5.6/5.7(MariaDB 5.5/10.0/10
 ## 安装
 
 ```bash
-## 一键安装命令
-yum install -y wget unzip && wget https://git.io/vaztP -O LNMP-dev.zip && unzip LNMP-dev.zip && cd LNMP-dev && bash lnmp.sh
+## 确保 wget 命令已经安装，已安装请忽略此步
+yum install wget -y
 
-
-## 分步骤安装命令
-
-# 1、安装 wget 和 unzip
-yum install -y wget unzip
-
-# 2、下载并解压安装包
-wget https://github.com/maicong/LNMP/archive/dev.zip -O LNMP-dev.zip
-
-# 3、解压安装包
-unzip LNMP-dev.zip
-
-# 4、进入安装包目录
-cd LNMP-dev
-
-# 5、执行安装命令
-bash lnmp.sh
+## 执行安装脚本
+sh -c "$(wget https://raw.githubusercontent.com/maicong/LNMP/dev/lnmp.sh -O -)"
 
 # 如果想保存安装日志，请将 log 输出到指定文件
-# bash lnmp.sh 2>&1 | tee lnmp.log
+# sh -c "$(wget https://raw.githubusercontent.com/maicong/LNMP/dev/lnmp.sh -O -)" 2>&1 | tee lnmp.log
 ```
 
 ## 帮助
