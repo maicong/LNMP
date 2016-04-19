@@ -211,9 +211,9 @@ service vbackup del c7-20151010-101010.tar.gz
 
 ## 8、示例图
 
-![](http://i13.tietuku.com/1b0ce6885457c95b.png)
+![](http://i13.piimg.com/1b0ce6885457c95b.png)
 
-![](http://i13.tietuku.com/184a2be1381e39a5.png)
+![](http://i13.piimg.com/184a2be1381e39a5.png)
 
 
 ## 9、协议
