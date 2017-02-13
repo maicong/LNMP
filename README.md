@@ -1,7 +1,7 @@
 CentOS 7 YUM 安装 LNMP 环境 (开发版)
 =======
 
-CentOS 7 YUM Installation: Nginx 1.8/1.9 + MySQL 5.5/5.6/5.7(MariaDB 5.5/10.0/10.1) + PHP 5.5/5.6/7.0 + phpMyAdmin(Adminer) ( **Development** )
+CentOS 7 YUM Installation: Nginx 1.10/1.11 + MySQL 5.5/5.6/5.7(MariaDB 5.5/10.0/10.1) + PHP 5.5/5.6/7.0 + phpMyAdmin(Adminer) ( **Development** )
 
 ## 说明
 
@@ -14,10 +14,10 @@ CentOS 7 YUM Installation: Nginx 1.8/1.9 + MySQL 5.5/5.6/5.7(MariaDB 5.5/10.0/10
 yum install wget -y
 
 ## 执行安装脚本
-sh -c "$(wget https://raw.githubusercontent.com/maicong/LNMP/dev/lnmp.sh -O -)"
+sh -c "$(wget https://cdn.rawgit.com/maicong/LNMP/dev/lnmp.sh -O -)"
 
 # 如果想保存安装日志，请将 log 输出到指定文件
-# sh -c "$(wget https://raw.githubusercontent.com/maicong/LNMP/dev/lnmp.sh -O -)" 2>&1 | tee lnmp.log
+# sh -c "$(wget https://cdn.rawgit.com/maicong/LNMP/dev/lnmp.sh -O -)" 2>&1 | tee lnmp.log
 ```
 
 ## 帮助

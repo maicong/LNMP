@@ -3,7 +3,7 @@
 #
 # CentOS 7 LNMP
 #
-# Nginx 1.8/1.9 + MySQL 5.5/5.6/5.7(MariaDB 5.5/10.0/10.1) + PHP 5.5/5.6/7.0 + phpMyAdmin(Adminer)
+# Nginx 1.10/1.11 + MySQL 5.5/5.6/5.7(MariaDB 5.5/10.0/10.1) + PHP 5.5/5.6/7.0 + phpMyAdmin(Adminer)
 #
 # https://github.com/maicong/LNMP
 #
@@ -22,16 +22,16 @@ dbV=''
 startDate=''
 startDateSecond=''
 installDB=''
-ipAddress=$(ip addr | egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | egrep -v "^192\.168|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-2]\.|^10\.|^127\.|^255\." | head -n 1)
+ipAddress=$(ip addr | egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | egrep -v "^192\.168|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-2]\.|^10\.|^127\.|^255\." | head -n 1) || '0.0.0.0'
 mysqlPWD=$(echo -n $RANDOM  | md5sum | sed "s/ .*//" | cut -b -8)
-mysqlUrl='http://repo.mysql.com'
-mariaDBUrl='http://yum.mariadb.org'
-phpUrl='http://rpms.remirepo.net'
-nginxUrl='http://nginx.org'
-mysqlCDNUrl='http://cdn-mysql.b0.upaiyun.com'
-mariaDBCDNUrl='http://cdn-mariadb.b0.upaiyun.com'
-phpCDNUrl='http://cdn-remi.b0.upaiyun.com'
-nginxCDNUrl='http://cdn-nginx.b0.upaiyun.com'
+mysqlUrl='https://repo.mysql.com'
+mariaDBUrl='https://yum.mariadb.org'
+phpUrl='https://rpms.remirepo.net'
+nginxUrl='https://nginx.org'
+mysqlUrl_CN='https://mirrors.tuna.tsinghua.edu.cn/mysql'
+mariaDBUrl_CN='https://mirrors.tuna.tsinghua.edu.cn/mariadb'
+phpUrl_CN='https://mirrors.tuna.tsinghua.edu.cn/remi'
+nginxUrl_CN='https://cdn-nginx.b0.upaiyun.com'
 
 ## 输出正确信息
 showOk(){
@@ -54,53 +54,56 @@ runInstall(){
 
     showNotice 'Installing...'
 
-    showNotice '(Step 1/6) Please input server IPv4 Address'
+    showNotice '(Step 1/6) Input server IPv4 Address'
     read -p "IP address: " -r -e -i "$ipAddress" ipAddress
     if [[ "$ipAddress" = '' ]]; then
         showError 'Invalid IP Address' && exit
     fi
 
-    showNotice "(Step 2/6) Please select the MySQL version"
+    showNotice "(Step 2/6) Select the MySQL version"
     echo "1) MariaDB-5.5"
     echo "2) MariaDB-10.0"
     echo "3) MariaDB-10.1"
-    echo "4) MySQL-5.5"
-    echo "5) MySQL-5.6"
-    echo "6) MySQL-5.7 (Dev)"
-    read -p 'MySQL [1-6]: ' -r -e -i 3 mysqlV
+    echo "4) MariaDB-10.2"
+    echo "5) MySQL-5.5"
+    echo "6) MySQL-5.6"
+    echo "7) MySQL-5.7"
+    echo "8) MySQL-8.0"
+    read -p 'MySQL [1-8]: ' -r -e -i 4 mysqlV
     if [[ "$mysqlV" = '' ]]; then
         showError 'Invalid MySQL version' && exit
     fi
 
-    showNotice "(Step 3/6) Please select the PHP version"
+    showNotice "(Step 3/6) Select the PHP version"
     echo "1) PHP-5.5"
     echo "2) PHP-5.6"
     echo "3) PHP-7.0"
-    read -p 'PHP [1-3]: ' -r -e -i 3 phpV
+    echo "4) PHP-7.1"
+    read -p 'PHP [1-4]: ' -r -e -i 4 phpV
     if [[ "$phpV" = '' ]]; then
         showError 'Invalid PHP version' && exit
     fi
 
-    showNotice "(Step 4/6) Please select the Nginx version"
-    echo "1) Nginx-1.8"
-    echo "2) Nginx-1.9 (Dev)"
+    showNotice "(Step 4/6) Select the Nginx version"
+    echo "1) Nginx-1.10"
+    echo "2) Nginx-1.11"
     read -p 'Nginx [1-2]: ' -r -e -i 2 nginxV
     if [[ "$nginxV" = '' ]]; then
         showError 'Invalid Nginx version' && exit
     fi
 
-    showNotice "(Step 5/6) Please select the DB tool version"
+    showNotice "(Step 5/6) Select the DB tool version"
     echo "1) Adminer"
     echo "2) phpMyAdmin"
     echo "3) Not need"
-    read -p 'DB tool [1-3]: ' -r -e -i 1 dbV
+    read -p 'DB tool [1-3]: ' -r -e -i 3 dbV
     if [[ "$dbV" = '' ]]; then
         showError 'Invalid DB tool version' && exit
     fi
 
-    showNotice "(Step 6/6) Use a proxy server to download rpms"
+    showNotice "(Step 6/6) Use a mirror server to download rpms"
     echo "1) Source station"
-    echo "2) Upaiyun CDN"
+    echo "2) Mirror station"
     read -p 'Proxy server [1-2]: ' -r -e -i 1 freeV
     if [[ "$freeV" = '' ]]; then
         showError 'Invalid Proxy server' && exit
@@ -141,10 +144,10 @@ runInstall(){
     nginxRepoUrl=$nginxUrl
 
     if [[ "$freeV" = "2" ]]; then
-        mysqlRepoUrl=$mysqlCDNUrl
-        mariaDBRepoUrl=$mariaDBCDNUrl
-        phpRepoUrl=$phpCDNUrl
-        nginxRepoUrl=$nginxCDNUrl
+        mysqlRepoUrl=$mysqlUrl_CN
+        mariaDBRepoUrl=$mariaDBUrl_CN
+        phpRepoUrl=$phpUrl_CN
+        nginxRepoUrl=$nginxUrl_CN
 
         mv -bfu /etc/yum.repos.d/epel.repo /etc/yum.repos.d/epel.repo.bak
         mv -bfu /etc/yum.repos.d/epel-testing.repo /etc/yum.repos.d/epel-testing.repo.bak
@@ -152,12 +155,12 @@ runInstall(){
         wget -c --tries=3 -O /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-7.repo
     fi
 
-    rpm --import $phpRepoUrl/RPM-GPG-KEY-remi
-    rpm --import $nginxRepoUrl/packages/keys/nginx_signing.key
+    rpm --import ./keys/RPM-GPG-KEY-remi
+    rpm --import ./keys/nginx_signing.key
     rpm -Uvh $phpRepoUrl/enterprise/remi-release-7.rpm
     rpm -Uvh $nginxRepoUrl/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
 
-    if [[ "$mysqlV" = "1" || "$mysqlV" = "2" || "$mysqlV" = "3" ]]; then
+    if [[ "$mysqlV" = "1" || "$mysqlV" = "2" || "$mysqlV" = "3" || "$mysqlV" = "4" ]]; then
         mariadbV='10.1'
         installDB='mariadb'
         case $mysqlV in
@@ -172,9 +175,9 @@ runInstall(){
             ;;
         esac
         echo -e "[mariadb]\nname = MariaDB\nbaseurl = $mariaDBRepoUrl/$mariadbV/centos7-amd64\ngpgkey=$mariaDBRepoUrl/RPM-GPG-KEY-MariaDB\ngpgcheck=1" > /etc/yum.repos.d/mariadb.repo
-    elif [[ "$mysqlV" = "4" || "$mysqlV" = "5" || "$mysqlV" = "6" ]]; then
-        rpm --import $mysqlRepoUrl/RPM-GPG-KEY-mysql
-        rpm -Uvh $mysqlRepoUrl/mysql-community-release-el7-5.noarch.rpm
+    elif [[ "$mysqlV" = "5" || "$mysqlV" = "6" || "$mysqlV" = "7" || "$mysqlV" = "8" ]]; then
+        rpm --import ./keys/RPM-GPG-KEY-mysql
+        rpm -Uvh $mysqlRepoUrl/mysql-community-release-el7-7.noarch.rpm
         find /etc/yum.repos.d/ -maxdepth 1 -name "mysql-community*.repo" -type f -print0 | xargs -0 sed -i "s@$mysqlUrl@$mysqlRepoUrl@g"
         installDB='mysqld'
 
@@ -235,7 +238,7 @@ runInstall(){
         sed -i "s/packages/packages\/mainline/g" $nginxRepo
     fi
 
-    yum clean all && yum makecache
+    yum clean all && yum makecache fast
 
     if [[ "$installDB" = "mariadb" ]]; then
         yum install -y MariaDB-server MariaDB-client
