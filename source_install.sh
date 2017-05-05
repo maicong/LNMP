@@ -15,7 +15,7 @@ showNotice() {
   echo -e "\n\033[36m[NOTICE]\033[0m $1"
 }
 
-function Install_ready() {
+function install_ready() {
   showNotice "Install packages ..."
   if [ "$(rpm -qa epel-release | wc -l)" == "0" ]
   then
@@ -28,7 +28,7 @@ function Install_ready() {
   [ -f /etc/ld.so.conf.d/custom-libs.conf ] && rm -rf /etc/ld.so.conf.d/custom-libs.conf
 }
 
-function Install_libiconv() {
+function install_libiconv() {
   if [ ! -d '/usr/local/libiconv' ]
   then
     showNotice "Download ${libiconvVersion} ..."
@@ -45,7 +45,7 @@ function Install_libiconv() {
   ldconfig
 }
 
-function Install_pcre() {
+function install_pcre() {
   if [ ! -d '/usr/local/pcre' ]
   then
     showNotice "Download ${pcreVersion} ..."
@@ -62,7 +62,7 @@ function Install_pcre() {
   ldconfig
 }
 
-function Install_zlib() {
+function install_zlib() {
   if [ ! -d '/usr/local/zlib' ]
   then
     showNotice "Download ${zlibVersion} ..."
@@ -79,7 +79,7 @@ function Install_zlib() {
   ldconfig
 }
 
-function Install_gd() {
+function install_gd() {
   if [ ! -d '/usr/local/libgd' ]
   then
     showNotice "Download ${libgdVersion} ..."
@@ -106,7 +106,7 @@ function Install_gd() {
   ldconfig
 }
 
-function Install_openssl() {
+function install_openssl() {
   if [ ! -d '/usr/local/openssl' ]
   then
     showNotice "Download ${opensslVersion} ..."
@@ -121,7 +121,7 @@ function Install_openssl() {
   fi
 }
 
-function Install_php() {
+function install_php() {
   if [ ! -d '/usr/local/php71' ]
   then
     showNotice "Download ${phpVersion} ..."
@@ -272,12 +272,12 @@ function clean_files() {
   rm -rfv ${nginxVersion}.tar.gz ${nginxVersion:?}/
 }
 
-Install_ready
-Install_libiconv
-Install_pcre
-Install_zlib
-Install_gd
-Install_openssl
-Install_php
+install_ready
+install_libiconv
+install_pcre
+install_zlib
+install_gd
+install_openssl
+install_php
 install_nginx
 clean_files
