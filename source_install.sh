@@ -11,11 +11,11 @@ opensslVersion='openssl-1.0.2k'
 phpVersion='php-7.1.4'
 nginxVersion='nginx-1.12.0'
 
-showNotice() {
+function showNotice() {
   echo -e "\n\033[36m[NOTICE]\033[0m $1"
 }
 
-function install_ready() {
+function installReady() {
   showNotice "Install packages ..."
   if [ "$(rpm -qa epel-release | wc -l)" == "0" ]
   then
@@ -28,7 +28,7 @@ function install_ready() {
   [ -f /etc/ld.so.conf.d/custom-libs.conf ] && rm -rf /etc/ld.so.conf.d/custom-libs.conf
 }
 
-function install_libiconv() {
+function installLibiconv() {
   if [ ! -d '/usr/local/libiconv' ]
   then
     showNotice "Download ${libiconvVersion} ..."
@@ -45,7 +45,7 @@ function install_libiconv() {
   ldconfig
 }
 
-function install_pcre() {
+function installPcre() {
   if [ ! -d '/usr/local/pcre' ]
   then
     showNotice "Download ${pcreVersion} ..."
@@ -62,7 +62,7 @@ function install_pcre() {
   ldconfig
 }
 
-function install_zlib() {
+function installZlib() {
   if [ ! -d '/usr/local/zlib' ]
   then
     showNotice "Download ${zlibVersion} ..."
@@ -79,7 +79,7 @@ function install_zlib() {
   ldconfig
 }
 
-function install_gd() {
+function installGd() {
   if [ ! -d '/usr/local/libgd' ]
   then
     showNotice "Download ${libgdVersion} ..."
@@ -106,7 +106,7 @@ function install_gd() {
   ldconfig
 }
 
-function install_openssl() {
+function installOpenssl() {
   if [ ! -d '/usr/local/openssl' ]
   then
     showNotice "Download ${opensslVersion} ..."
@@ -121,7 +121,7 @@ function install_openssl() {
   fi
 }
 
-function install_php() {
+function install_phpP {
   if [ ! -d '/usr/local/php71' ]
   then
     showNotice "Download ${phpVersion} ..."
@@ -196,7 +196,7 @@ function install_php() {
   fi
 }
 
-function install_nginx() {
+function installNginx() {
   if [ ! -d '/usr/local/nginx12' ]
   then
     [ ! -d "/usr/local/src/${pcreVersion}" ] && cp -a ${pcreVersion}/ /usr/local/src/
@@ -261,7 +261,7 @@ function install_nginx() {
   fi
 }
 
-function clean_files() {
+function cleanFiles() {
   showNotice "Clean files ..."
   rm -rfv ${libiconvVersion}.tar.gz ${libiconvVersion:?}/
   rm -rfv ${libgdVersion}.tar.gz ${libgdVersion:?}/
@@ -272,12 +272,12 @@ function clean_files() {
   rm -rfv ${nginxVersion}.tar.gz ${nginxVersion:?}/
 }
 
-install_ready
-install_libiconv
-install_pcre
-install_zlib
-install_gd
-install_openssl
-install_php
-install_nginx
-clean_files
+installReady
+installLibiconv
+installPcre
+installZlib
+installGd
+installOpenssl
+installPhp
+installNginx
+cleanFiles
