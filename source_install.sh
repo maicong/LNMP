@@ -121,7 +121,7 @@ function installOpenssl() {
   fi
 }
 
-function install_phpP {
+function installPhp {
   if [ ! -d '/usr/local/php71' ]
   then
     showNotice "Download ${phpVersion} ..."
