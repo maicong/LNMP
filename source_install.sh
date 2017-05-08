@@ -205,6 +205,7 @@ function installPhp {
     ln -sf /usr/local/php71/bin/php /usr/bin/php
     ln -sf /usr/local/php71/bin/phpize /usr/bin/phpize
     ln -sf /usr/local/php71/sbin/php-fpm /usr/bin/php-fpm
+    cp -v php.ini-production /etc/php71/php.ini
   fi
 }
 
