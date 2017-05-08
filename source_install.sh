@@ -10,6 +10,7 @@ zlibVersion='zlib-1.2.11'
 opensslVersion='openssl-1.0.2k'
 phpVersion='php-7.1.4'
 nginxVersion='nginx-1.12.0'
+
 cpuNum=$(grep 'processor' -c /proc/cpuinfo)
 
 function showNotice() {
@@ -21,10 +22,9 @@ function installReady() {
   if [ "$(rpm -qa epel-release | wc -l)" == "0" ]
   then
     yum install -y epel-release
-    yum clean all
     yum makecache fast
   fi
-  yum install -y gcc gcc-c++ perl libpng-devel libjpeg-devel libwebp-devel libXpm-devel libtiff-devel libxml2-devel libcurl-devel libmcrypt-devel freetype-devel libzip-devel bzip2-devel gmp-devel readline-devel recode-devel GeoIP-devel bison re2c
+  yum install -y gcc gcc-c++ perl libpng-devel libjpeg-devel libwebp-devel libXpm-devel libtiff-devel libxml2-devel libcurl-devel libmcrypt-devel fontconfig-devel freetype-devel libzip-devel bzip2-devel gmp-devel readline-devel recode-devel GeoIP-devel bison re2c
 
   [ -f /etc/ld.so.conf.d/custom-libs.conf ] && rm -rf /etc/ld.so.conf.d/custom-libs.conf
 }
@@ -33,6 +33,7 @@ function installLibiconv() {
   if [ ! -d '/usr/local/libiconv' ]
   then
     showNotice "Download ${libiconvVersion} ..."
+    cd /tmp || exit
     curl -O --retry 3 https://ftp.gnu.org/pub/gnu/libiconv/${libiconvVersion}.tar.gz
 
     showNotice "Install ${libiconvVersion} ..."
@@ -40,7 +41,7 @@ function installLibiconv() {
 
     cd ${libiconvVersion} || exit
     ./configure --prefix=/usr/local/libiconv
-    make -i "$cpuNum"
+    make -j "$cpuNum"
     make install
   fi
   echo '/usr/local/libiconv/lib' >> /etc/ld.so.conf.d/custom-libs.conf
@@ -51,14 +52,15 @@ function installPcre() {
   if [ ! -d '/usr/local/pcre' ]
   then
     showNotice "Download ${pcreVersion} ..."
+    cd /tmp || exit
     curl -O --retry 3 https://ftp.pcre.org/pub/pcre/${pcreVersion}.tar.gz
 
     showNotice "Install ${pcreVersion} ..."
-    tar -zxf ${pcreVersion}.tar.gz
+    tar -zxf ${pcreVersion}.tar.gz -C /usr/local/src/
 
-    cd ${pcreVersion} || exit
+    cd /usr/local/src/${pcreVersion} || exit
     ./configure --prefix=/usr/local/pcre
-    make -i "$cpuNum"
+    make -j "$cpuNum"
     make install
   fi
   echo '/usr/local/pcre/lib' >> /etc/ld.so.conf.d/custom-libs.conf
@@ -69,14 +71,15 @@ function installZlib() {
   if [ ! -d '/usr/local/zlib' ]
   then
     showNotice "Download ${zlibVersion} ..."
+    cd /tmp || exit
     curl -O --retry 3 http://zlib.net/${zlibVersion}.tar.gz
 
     showNotice "Install ${zlibVersion} ..."
-    tar -zxf ${zlibVersion}.tar.gz
+    tar -zxf ${zlibVersion}.tar.gz -C /usr/local/src/
 
-    cd ${zlibVersion} || exit
+    cd /usr/local/src/${zlibVersion} || exit
     ./configure --prefix=/usr/local/zlib
-    make -i "$cpuNum"
+    make -j "$cpuNum"
     make install
   fi
   echo '/usr/local/zlib/lib' >> /etc/ld.so.conf.d/custom-libs.conf
@@ -87,7 +90,8 @@ function installGd() {
   if [ ! -d '/usr/local/libgd' ]
   then
     showNotice "Download ${libgdVersion} ..."
-    curl -O --retry 3 http://7xn5mr.dl1.z0.glb.clouddn.com/${libgdVersion}.tar.gz
+    cd /tmp || exit
+    curl -O --retry 3 -L https://github.com/libgd/libgd/releases/download/${libgdVersion/lib/}/${libgdVersion}.tar.gz
 
     showNotice "Install ${libgdVersion} ..."
     tar -zxf ${libgdVersion}.tar.gz
@@ -104,7 +108,7 @@ function installGd() {
       --with-freetype=/usr \
       --with-fontconfig=/usr \
       --with-tiff=/usr
-    make -i "$cpuNum"
+    make -j "$cpuNum"
     make install
   fi
   echo '/usr/local/libgd/lib' >> /etc/ld.so.conf.d/custom-libs.conf
@@ -115,14 +119,15 @@ function installOpenssl() {
   if [ ! -d '/usr/local/openssl' ]
   then
     showNotice "Download ${opensslVersion} ..."
-    curl -O --retry 3 http://7xn5mr.dl1.z0.glb.clouddn.com/${opensslVersion}.tar.gz
+    cd /tmp || exit
+    curl -O --retry 3 https://www.openssl.org/source/${opensslVersion}.tar.gz
 
     showNotice "Install ${opensslVersion} ..."
-    tar -zxf ${opensslVersion}.tar.gz
+    tar -zxf ${opensslVersion}.tar.gz -C /usr/local/src/
 
-    cd ${opensslVersion} || exit
+    cd /usr/local/src/${opensslVersion} || exit
     ./config --prefix=/usr/local/openssl -fPIC
-    make -i "$cpuNum"
+    make -j "$cpuNum"
     make install
   fi
 }
@@ -131,6 +136,7 @@ function installPhp {
   if [ ! -d '/usr/local/php71' ]
   then
     showNotice "Download ${phpVersion} ..."
+    cd /tmp || exit
     curl -O --retry 3 http://cn2.php.net/distributions/${phpVersion}.tar.gz
 
     showNotice "Install ${phpVersion} ..."
@@ -194,7 +200,7 @@ function installPhp {
       --enable-opcache \
       --disable-fileinfo \
       --disable-debug
-    make -i "$cpuNum"
+    make -j "$cpuNum"
     make install
     ln -sf /usr/local/php71/bin/php /usr/bin/php
     ln -sf /usr/local/php71/bin/phpize /usr/bin/phpize
@@ -205,43 +211,8 @@ function installPhp {
 function installNginx() {
   if [ ! -d '/usr/local/nginx12' ]
   then
-    if [ ! -d "/usr/local/src/${pcreVersion}" ]
-    then
-      if [ ! -d ${pcreVersion}/ ]
-      then
-        showNotice "Redownload ${pcreVersion} ..."
-        curl -O --retry 3 https://ftp.pcre.org/pub/pcre/${pcreVersion}.tar.gz
-        tar -zxf ${pcreVersion}.tar.gz -C /usr/local/src/
-      else
-        cp -a ${pcreVersion}/ /usr/local/src/
-      fi
-    fi
-
-    if [ ! -d "/usr/local/src/${zlibVersion}" ]
-    then
-      if [ ! -d ${zlibVersion}/ ]
-      then
-        showNotice "Redownload ${zlibVersion} ..."
-        curl -O --retry 3 http://zlib.net/${zlibVersion}.tar.gz
-        tar -zxf ${zlibVersion}.tar.gz -C /usr/local/src/
-      else
-        cp -a ${zlibVersion}/ /usr/local/src/
-      fi
-    fi
-
-    if [ ! -d "/usr/local/src/${opensslVersion}" ]
-    then
-      if [ ! -d ${opensslVersion}/ ]
-      then
-        showNotice "Redownload ${opensslVersion} ..."
-        curl -O --retry 3 http://7xn5mr.dl1.z0.glb.clouddn.com/${opensslVersion}.tar.gz
-        tar -zxf ${opensslVersion}.tar.gz -C /usr/local/src/
-      else
-        cp -a ${opensslVersion}/ /usr/local/src/
-      fi
-    fi
-
     showNotice "Download ${nginxVersion} ..."
+    cd /tmp || exit
     curl -O --retry 3 http://nginx.org/download/${nginxVersion}.tar.gz
 
     showNotice "Install ${nginxVersion} ..."
@@ -293,7 +264,7 @@ function installNginx() {
       --with-pcre=/usr/local/src/${pcreVersion} \
       --with-zlib=/usr/local/src/${zlibVersion} \
       --with-openssl=/usr/local/src/${opensslVersion}
-    make -i "$cpuNum"
+    make -j "$cpuNum"
     make install
     ln -sf /usr/local/nginx12/sbin/nginx /usr/bin/nginx
   fi
@@ -301,13 +272,13 @@ function installNginx() {
 
 function cleanFiles() {
   showNotice "Clean files ..."
-  rm -rfv ${libiconvVersion}.tar.gz ${libiconvVersion:?}/
-  rm -rfv ${libgdVersion}.tar.gz ${libgdVersion:?}/
-  rm -rfv ${pcreVersion}.tar.gz ${pcreVersion:?}/
-  rm -rfv ${zlibVersion}.tar.gz ${zlibVersion:?}/
-  rm -rfv ${opensslVersion}.tar.gz ${opensslVersion:?}/
-  rm -rfv ${phpVersion}.tar.gz ${phpVersion:?}/
-  rm -rfv ${nginxVersion}.tar.gz ${nginxVersion:?}/
+  rm -rfv /tmp/${libiconvVersion}*
+  rm -rfv /tmp/${libgdVersion}*
+  rm -rfv /tmp/${pcreVersion}*
+  rm -rfv /tmp/${zlibVersion}*
+  rm -rfv /tmp/${opensslVersion}*
+  rm -rfv /tmp/${phpVersion}*
+  rm -rfv /tmp/${nginxVersion}*
 }
 
 installReady
@@ -318,4 +289,4 @@ installGd
 installOpenssl
 installPhp
 installNginx
-# cleanFiles
+cleanFiles
