@@ -133,7 +133,7 @@ function install_php() {
     # ln -sf /usr/lib64/libc-client.so /usr/lib/libc-client.so
     ./configure \
       --prefix=/usr/local/php71 \
-      --sysconfdir=/etc/php \
+      --sysconfdir=/etc/php71 \
       --with-config-file-path=/etc/php71 \
       --with-config-file-scan-dir=/etc/php71/conf.d \
       --with-fpm-user=www \
@@ -197,7 +197,7 @@ function install_php() {
 }
 
 function install_nginx() {
-  if [ ! -d '/usr/local/nginx' ]
+  if [ ! -d '/usr/local/nginx12' ]
   then
     [ ! -d "/usr/local/src/${pcreVersion}" ] && cp -a ${pcreVersion}/ /usr/local/src/
     [ ! -d "/usr/local/src/${zlibVersion}" ] && cp -a ${zlibVersion}/ /usr/local/src/
@@ -211,17 +211,17 @@ function install_nginx() {
     cd ${nginxVersion} || exit
 
     ./configure \
-      --prefix=/usr/local/nginx \
-      --conf-path=/etc/nginx/nginx.conf \
-      --error-log-path=/var/log/nginx/error.log \
-      --http-log-path=/var/log/nginx/access.log \
-      --pid-path=/var/run/nginx.pid \
-      --lock-path=/var/run/nginx.lock \
-      --http-client-body-temp-path=/var/cache/nginx/client_temp \
-      --http-proxy-temp-path=/var/cache/nginx/proxy_temp \
-      --http-fastcgi-temp-path=/var/cache/nginx/fastcgi_temp \
-      --http-uwsgi-temp-path=/var/cache/nginx/uwsgi_temp \
-      --http-scgi-temp-path=/var/cache/nginx/scgi_temp \
+      --prefix=/usr/local/nginx12 \
+      --conf-path=/etc/nginx12/nginx.conf \
+      --error-log-path=/var/log/nginx12/error.log \
+      --http-log-path=/var/log/nginx12/access.log \
+      --pid-path=/var/run/nginx12.pid \
+      --lock-path=/var/run/nginx12.lock \
+      --http-client-body-temp-path=/var/cache/nginx12/client_temp \
+      --http-proxy-temp-path=/var/cache/nginx12/proxy_temp \
+      --http-fastcgi-temp-path=/var/cache/nginx12/fastcgi_temp \
+      --http-uwsgi-temp-path=/var/cache/nginx12/uwsgi_temp \
+      --http-scgi-temp-path=/var/cache/nginx12/scgi_temp \
       --user=www \
       --group=www \
       --with-threads \
@@ -257,7 +257,7 @@ function install_nginx() {
       --with-openssl=/usr/local/src/${opensslVersion}
     make
     make install
-    ln -sf /usr/local/nginx/sbin/nginx /usr/bin/nginx
+    ln -sf /usr/local/nginx12/sbin/nginx /usr/bin/nginx
   fi
 }
 
