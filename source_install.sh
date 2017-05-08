@@ -10,6 +10,7 @@ zlibVersion='zlib-1.2.11'
 opensslVersion='openssl-1.0.2k'
 phpVersion='php-7.1.4'
 nginxVersion='nginx-1.12.0'
+cpuNum=$(grep 'processor' -c /proc/cpuinfo)
 
 function showNotice() {
   echo -e "\n\033[36m[NOTICE]\033[0m $1"
@@ -36,9 +37,10 @@ function installLibiconv() {
 
     showNotice "Install ${libiconvVersion} ..."
     tar -zxf ${libiconvVersion}.tar.gz
+
     cd ${libiconvVersion} || exit
     ./configure --prefix=/usr/local/libiconv
-    make
+    make -i "$cpuNum"
     make install
   fi
   echo '/usr/local/libiconv/lib' >> /etc/ld.so.conf.d/custom-libs.conf
@@ -53,9 +55,10 @@ function installPcre() {
 
     showNotice "Install ${pcreVersion} ..."
     tar -zxf ${pcreVersion}.tar.gz
+
     cd ${pcreVersion} || exit
     ./configure --prefix=/usr/local/pcre
-    make
+    make -i "$cpuNum"
     make install
   fi
   echo '/usr/local/pcre/lib' >> /etc/ld.so.conf.d/custom-libs.conf
@@ -70,9 +73,10 @@ function installZlib() {
 
     showNotice "Install ${zlibVersion} ..."
     tar -zxf ${zlibVersion}.tar.gz
+
     cd ${zlibVersion} || exit
     ./configure --prefix=/usr/local/zlib
-    make
+    make -i "$cpuNum"
     make install
   fi
   echo '/usr/local/zlib/lib' >> /etc/ld.so.conf.d/custom-libs.conf
@@ -87,6 +91,7 @@ function installGd() {
 
     showNotice "Install ${libgdVersion} ..."
     tar -zxf ${libgdVersion}.tar.gz
+
     cd ${libgdVersion} || exit
     ./configure \
       --prefix=/usr/local/libgd \
@@ -99,7 +104,7 @@ function installGd() {
       --with-freetype=/usr \
       --with-fontconfig=/usr \
       --with-tiff=/usr
-    make
+    make -i "$cpuNum"
     make install
   fi
   echo '/usr/local/libgd/lib' >> /etc/ld.so.conf.d/custom-libs.conf
@@ -114,9 +119,10 @@ function installOpenssl() {
 
     showNotice "Install ${opensslVersion} ..."
     tar -zxf ${opensslVersion}.tar.gz
+
     cd ${opensslVersion} || exit
     ./config --prefix=/usr/local/openssl -fPIC
-    make
+    make -i "$cpuNum"
     make install
   fi
 }
@@ -129,8 +135,8 @@ function installPhp {
 
     showNotice "Install ${phpVersion} ..."
     tar -zxf ${phpVersion}.tar.gz
+
     cd ${phpVersion} || exit
-    # ln -sf /usr/lib64/libc-client.so /usr/lib/libc-client.so
     ./configure \
       --prefix=/usr/local/php71 \
       --sysconfdir=/etc/php71 \
@@ -188,7 +194,7 @@ function installPhp {
       --enable-opcache \
       --disable-fileinfo \
       --disable-debug
-    make
+    make -i "$cpuNum"
     make install
     ln -sf /usr/local/php71/bin/php /usr/bin/php
     ln -sf /usr/local/php71/bin/phpize /usr/bin/phpize
@@ -208,8 +214,8 @@ function installNginx() {
 
     show_notice "Install ${nginxVersion} ..."
     tar -zxf ${nginxVersion}.tar.gz
-    cd ${nginxVersion} || exit
 
+    cd ${nginxVersion} || exit
     ./configure \
       --prefix=/usr/local/nginx12 \
       --conf-path=/etc/nginx12/nginx.conf \
@@ -255,7 +261,7 @@ function installNginx() {
       --with-pcre=/usr/local/src/${pcreVersion} \
       --with-zlib=/usr/local/src/${zlibVersion} \
       --with-openssl=/usr/local/src/${opensslVersion}
-    make
+    make -i "$cpuNum"
     make install
     ln -sf /usr/local/nginx12/sbin/nginx /usr/bin/nginx
   fi
