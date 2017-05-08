@@ -205,14 +205,46 @@ function installPhp {
 function installNginx() {
   if [ ! -d '/usr/local/nginx12' ]
   then
-    [ ! -d "/usr/local/src/${pcreVersion}" ] && cp -a ${pcreVersion}/ /usr/local/src/
-    [ ! -d "/usr/local/src/${zlibVersion}" ] && cp -a ${zlibVersion}/ /usr/local/src/
-    [ ! -d "/usr/local/src/${opensslVersion}" ] && cp -a ${opensslVersion}/ /usr/local/src/
+    if [ ! -d "/usr/local/src/${pcreVersion}" ]
+    then
+      if [ ! -d ${pcreVersion}/ ]
+      then
+        showNotice "Redownload ${pcreVersion} ..."
+        curl -O --retry 3 https://ftp.pcre.org/pub/pcre/${pcreVersion}.tar.gz
+        tar -zxf ${pcreVersion}.tar.gz -C /usr/local/src/
+      else
+        cp -a ${pcreVersion}/ /usr/local/src/
+      fi
+    fi
 
-    show_notice "Download ${nginxVersion} ..."
+    if [ ! -d "/usr/local/src/${zlibVersion}" ]
+    then
+      if [ ! -d ${zlibVersion}/ ]
+      then
+        showNotice "Redownload ${zlibVersion} ..."
+        curl -O --retry 3 http://zlib.net/${zlibVersion}.tar.gz
+        tar -zxf ${zlibVersion}.tar.gz -C /usr/local/src/
+      else
+        cp -a ${zlibVersion}/ /usr/local/src/
+      fi
+    fi
+
+    if [ ! -d "/usr/local/src/${opensslVersion}" ]
+    then
+      if [ ! -d ${opensslVersion}/ ]
+      then
+        showNotice "Redownload ${opensslVersion} ..."
+        curl -O --retry 3 http://7xn5mr.dl1.z0.glb.clouddn.com/${opensslVersion}.tar.gz
+        tar -zxf ${opensslVersion}.tar.gz -C /usr/local/src/
+      else
+        cp -a ${opensslVersion}/ /usr/local/src/
+      fi
+    fi
+
+    showNotice "Download ${nginxVersion} ..."
     curl -O --retry 3 http://nginx.org/download/${nginxVersion}.tar.gz
 
-    show_notice "Install ${nginxVersion} ..."
+    showNotice "Install ${nginxVersion} ..."
     tar -zxf ${nginxVersion}.tar.gz
 
     cd ${nginxVersion} || exit
@@ -286,4 +318,4 @@ installGd
 installOpenssl
 installPhp
 installNginx
-cleanFiles
+# cleanFiles
