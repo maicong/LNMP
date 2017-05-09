@@ -137,7 +137,7 @@ function installPhp {
   then
     showNotice "Download ${phpVersion} ..."
     cd /tmp || exit
-    curl -O --retry 3 http://cn2.php.net/distributions/${phpVersion}.tar.gz
+    curl -O --retry 3 http://php.net/distributions/${phpVersion}.tar.gz
 
     showNotice "Install ${phpVersion} ..."
     tar -zxf ${phpVersion}.tar.gz
@@ -220,6 +220,7 @@ function installNginx() {
     tar -zxf ${nginxVersion}.tar.gz
 
     cd ${nginxVersion} || exit
+    mkdir -p /var/cache/nginx12
     ./configure \
       --prefix=/usr/local/nginx12 \
       --conf-path=/etc/nginx12/nginx.conf \
