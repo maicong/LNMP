@@ -8,10 +8,8 @@ libgdVersion='libgd-2.2.4'
 pcreVersion='pcre-8.40'
 zlibVersion='zlib-1.2.11'
 opensslVersion='openssl-1.0.2k'
-phpVersion='php-7.1.4'
+phpVersion='php-7.1.5'
 nginxVersion='nginx-1.12.0'
-
-cpuNum=$(grep 'processor' -c /proc/cpuinfo)
 
 function showNotice() {
   echo -e "\n\033[36m[NOTICE]\033[0m $1"
@@ -41,7 +39,7 @@ function installLibiconv() {
 
     cd ${libiconvVersion} || exit
     ./configure --prefix=/usr/local/libiconv
-    make -j "$cpuNum"
+    make -j
     make install
   fi
   echo '/usr/local/libiconv/lib' >> /etc/ld.so.conf.d/custom-libs.conf
@@ -60,7 +58,7 @@ function installPcre() {
 
     cd /usr/local/src/${pcreVersion} || exit
     ./configure --prefix=/usr/local/pcre
-    make -j "$cpuNum"
+    make -j
     make install
   fi
   echo '/usr/local/pcre/lib' >> /etc/ld.so.conf.d/custom-libs.conf
@@ -79,7 +77,7 @@ function installZlib() {
 
     cd /usr/local/src/${zlibVersion} || exit
     ./configure --prefix=/usr/local/zlib
-    make -j "$cpuNum"
+    make -j
     make install
   fi
   echo '/usr/local/zlib/lib' >> /etc/ld.so.conf.d/custom-libs.conf
@@ -108,7 +106,7 @@ function installGd() {
       --with-freetype=/usr \
       --with-fontconfig=/usr \
       --with-tiff=/usr
-    make -j "$cpuNum"
+    make -j
     make install
   fi
   echo '/usr/local/libgd/lib' >> /etc/ld.so.conf.d/custom-libs.conf
@@ -127,7 +125,7 @@ function installOpenssl() {
 
     cd /usr/local/src/${opensslVersion} || exit
     ./config --prefix=/usr/local/openssl -fPIC
-    make -j "$cpuNum"
+    make -j
     make install
   fi
 }
@@ -147,7 +145,7 @@ function installPhp {
       --prefix=/usr/local/php71 \
       --sysconfdir=/etc/php71 \
       --with-config-file-path=/etc/php71 \
-      --with-config-file-scan-dir=/etc/php71/conf.d \
+      --with-config-file-scan-dir=/etc/php71/php-fpm.d \
       --with-fpm-user=www \
       --with-fpm-group=www \
       --with-curl \
@@ -200,12 +198,12 @@ function installPhp {
       --enable-opcache \
       --disable-fileinfo \
       --disable-debug
-    make -j "$cpuNum"
+    make -j
     make install
     ln -sf /usr/local/php71/bin/php /usr/bin/php
     ln -sf /usr/local/php71/bin/phpize /usr/bin/phpize
     ln -sf /usr/local/php71/sbin/php-fpm /usr/bin/php-fpm
-    cp -v php.ini-production /etc/php71/php.ini
+      cp -v php.ini-production /etc/php71/php.ini
   fi
 }
 
@@ -266,7 +264,7 @@ function installNginx() {
       --with-pcre=/usr/local/src/${pcreVersion} \
       --with-zlib=/usr/local/src/${zlibVersion} \
       --with-openssl=/usr/local/src/${opensslVersion}
-    make -j "$cpuNum"
+    make -j
     make install
     ln -sf /usr/local/nginx12/sbin/nginx /usr/bin/nginx
   fi
