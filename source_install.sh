@@ -7,7 +7,7 @@ libiconvVersion='libiconv-1.15'
 libgdVersion='libgd-2.2.4'
 pcreVersion='pcre-8.40'
 zlibVersion='zlib-1.2.11'
-opensslVersion='openssl-1.0.2k'
+opensslVersion='openssl-1.1.0f'
 phpVersion='php-7.1.5'
 nginxVersion='nginx-1.12.0'
 
