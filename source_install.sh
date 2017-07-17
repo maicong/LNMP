@@ -8,8 +8,8 @@ libgdVersion='libgd-2.2.4'
 pcreVersion='pcre-8.40'
 zlibVersion='zlib-1.2.11'
 opensslVersion='openssl-1.1.0f'
-phpVersion='php-7.1.5'
-nginxVersion='nginx-1.12.0'
+phpVersion='php-7.1.7'
+nginxVersion='nginx-1.12.1'
 
 function showNotice() {
   echo -e "\n\033[36m[NOTICE]\033[0m $1"
