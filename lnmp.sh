@@ -28,9 +28,9 @@ mysqlUrl='https://repo.mysql.com'
 mariaDBUrl='https://yum.mariadb.org'
 phpUrl='https://rpms.remirepo.net'
 nginxUrl='https://nginx.org'
-mysqlUrl_CN='https://mirrors.tuna.tsinghua.edu.cn/mysql'
-mariaDBUrl_CN='https://mirrors.tuna.tsinghua.edu.cn/mariadb'
-phpUrl_CN='https://mirrors.tuna.tsinghua.edu.cn/remi'
+mysqlUrl_CN='https://mirrors.ustc.edu.cn/mysql-repo'
+mariaDBUrl_CN='https://mirrors.ustc.edu.cn/mariadb/yum'
+phpUrl_CN='https://mirrors.ustc.edu.cn/remi'
 nginxUrl_CN='https://cdn-nginx.b0.upaiyun.com'
 
 ## 输出正确信息
@@ -65,28 +65,31 @@ runInstall(){
     echo "2) MariaDB-10.0"
     echo "3) MariaDB-10.1"
     echo "4) MariaDB-10.2"
-    echo "5) MySQL-5.5"
-    echo "6) MySQL-5.6"
-    echo "7) MySQL-5.7"
-    echo "8) MySQL-8.0"
-    read -p 'MySQL [1-8]: ' -r -e -i 4 mysqlV
+    echo "5) MariaDB-10.3"
+    echo "6) MySQL-5.5"
+    echo "7) MySQL-5.6"
+    echo "8) MySQL-5.7"
+    echo "9) MySQL-8.0"
+    read -p 'MySQL [1-9]: ' -r -e -i 5 mysqlV
     if [[ "$mysqlV" = '' ]]; then
         showError 'Invalid MySQL version' && exit
     fi
 
     showNotice "(Step 3/6) Select the PHP version"
-    echo "1) PHP-5.5"
-    echo "2) PHP-5.6"
-    echo "3) PHP-7.0"
-    echo "4) PHP-7.1"
-    read -p 'PHP [1-4]: ' -r -e -i 4 phpV
+    echo "1) PHP-5.4"
+    echo "2) PHP-5.5"
+    echo "3) PHP-5.6"
+    echo "4) PHP-7.0"
+    echo "5) PHP-7.1"
+    echo "6) PHP-7.2"
+    read -p 'PHP [1-6]: ' -r -e -i 6 phpV
     if [[ "$phpV" = '' ]]; then
         showError 'Invalid PHP version' && exit
     fi
 
     showNotice "(Step 4/6) Select the Nginx version"
-    echo "1) Nginx-1.10"
-    echo "2) Nginx-1.11"
+    echo "1) Nginx-1.12"
+    echo "2) Nginx-1.13"
     read -p 'Nginx [1-2]: ' -r -e -i 2 nginxV
     if [[ "$nginxV" = '' ]]; then
         showError 'Invalid Nginx version' && exit
@@ -160,7 +163,7 @@ runInstall(){
     rpm -Uvh $phpRepoUrl/enterprise/remi-release-7.rpm
     rpm -Uvh $nginxRepoUrl/packages/centos/7/noarch/RPMS/nginx-release-centos-7-0.el7.ngx.noarch.rpm
 
-    if [[ "$mysqlV" = "1" || "$mysqlV" = "2" || "$mysqlV" = "3" || "$mysqlV" = "4" ]]; then
+    if [[ "$mysqlV" = "1" || "$mysqlV" = "2" || "$mysqlV" = "3" || "$mysqlV" = "4" || "$mysqlV" = "5" ]]; then
         mariadbV='10.1'
         installDB='mariadb'
         case $mysqlV in
@@ -173,26 +176,36 @@ runInstall(){
             3)
             mariadbV='10.1'
             ;;
+            4)
+            mariadbV='10.2'
+            ;;
+            5)
+            mariadbV='10.3'
+            ;;
         esac
         echo -e "[mariadb]\nname = MariaDB\nbaseurl = $mariaDBRepoUrl/$mariadbV/centos7-amd64\ngpgkey=$mariaDBRepoUrl/RPM-GPG-KEY-MariaDB\ngpgcheck=1" > /etc/yum.repos.d/mariadb.repo
-    elif [[ "$mysqlV" = "5" || "$mysqlV" = "6" || "$mysqlV" = "7" || "$mysqlV" = "8" ]]; then
+    elif [[ "$mysqlV" = "6" || "$mysqlV" = "7" || "$mysqlV" = "8" || "$mysqlV" = "9" ]]; then
         rpm --import ./keys/RPM-GPG-KEY-mysql
-        rpm -Uvh $mysqlRepoUrl/mysql-community-release-el7-7.noarch.rpm
+        rpm -Uvh $mysqlRepoUrl/mysql57-community-release-el7-11.noarch.rpm
         find /etc/yum.repos.d/ -maxdepth 1 -name "mysql-community*.repo" -type f -print0 | xargs -0 sed -i "s@$mysqlUrl@$mysqlRepoUrl@g"
         installDB='mysqld'
 
         case $mysqlV in
-            4)
-            yum-config-manager --enable mysql55-community
-            yum-config-manager --disable mysql56-community mysql57-community-dmr
-            ;;
-            5)
-            yum-config-manager --enable mysql56-community
-            yum-config-manager --disable mysql55-community mysql57-community-dmr
-            ;;
             6)
-            yum-config-manager --enable mysql57-community-dmr
-            yum-config-manager --disable mysql55-community mysql56-community
+            yum-config-manager --enable mysql55-community
+            yum-config-manager --disable mysql56-community mysql57-community mysql80-community
+            ;;
+            7)
+            yum-config-manager --enable mysql56-community
+            yum-config-manager --disable mysql55-community mysql57-community mysql80-community
+            ;;
+            8)
+            yum-config-manager --enable mysql57-community
+            yum-config-manager --disable mysql55-community mysql56-community mysql80-community
+            ;;
+            9)
+            yum-config-manager --enable mysql80-community
+            yum-config-manager --disable mysql55-community mysql56-community mysql57-community
             ;;
         esac
     fi
@@ -215,16 +228,28 @@ runInstall(){
 
     case $phpV in
         1)
-        yum-config-manager --enable remi-php55
-        yum-config-manager --disable remi-php56 remi-php70
+        yum-config-manager --enable remi-php54
+        yum-config-manager --disable remi-php55 remi-php56 remi-php70 remi-php71 remi-php72
         ;;
         2)
-        yum-config-manager --enable remi-php56
-        yum-config-manager --disable remi-php55 remi-php70
+        yum-config-manager --enable remi-php55
+        yum-config-manager --disable remi-php54 remi-php56 remi-php70 remi-php71 remi-php72
         ;;
         3)
+        yum-config-manager --enable remi-php56
+        yum-config-manager --disable remi-php54 remi-php55 remi-php70 remi-php71 remi-php72
+        ;;
+        4)
         yum-config-manager --enable remi-php70
-        yum-config-manager --disable remi-php55 remi-php56
+        yum-config-manager --disable remi-php54 remi-php55 remi-php56 remi-php71 remi-php72
+        ;;
+        5)
+        yum-config-manager --enable remi-php71
+        yum-config-manager --disable remi-php54 remi-php55 remi-php56 remi-php70 remi-php72
+        ;;
+        6)
+        yum-config-manager --enable remi-php72
+        yum-config-manager --disable remi-php54 remi-php55 remi-php56 remi-php70 remi-php71
         ;;
     esac
 
