@@ -4,12 +4,12 @@ export PATH
 clear
 
 libiconvVersion='libiconv-1.15'
-libgdVersion='libgd-2.2.4'
-pcreVersion='pcre-8.40'
+libgdVersion='libgd-2.2.5'
+pcreVersion='pcre-8.41'
 zlibVersion='zlib-1.2.11'
 opensslVersion='openssl-1.1.0f'
-phpVersion='php-7.1.7'
-nginxVersion='nginx-1.12.1'
+phpVersion='php-7.2.0'
+nginxVersion='nginx-1.13.6'
 
 function showNotice() {
   echo -e "\n\033[36m[NOTICE]\033[0m $1"
@@ -25,7 +25,7 @@ function installReady() {
   yum install -y make gcc gcc-c++ perl libpng-devel libjpeg-devel libwebp-devel libXpm-devel libtiff-devel libxml2-devel libcurl-devel libmcrypt-devel fontconfig-devel freetype-devel libzip-devel bzip2-devel gmp-devel readline-devel recode-devel GeoIP-devel bison re2c
 
   [ -f /etc/ld.so.conf.d/custom-libs.conf ] && rm -rf /etc/ld.so.conf.d/custom-libs.conf
-  
+
   groupadd www
   useradd -m -s /sbin/nologin -g www www
 }
