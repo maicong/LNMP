@@ -1,7 +1,7 @@
 CentOS 7 YUM 安装 LNMP 环境 (开发版)
 =======
 
-CentOS 7 YUM Installation: Nginx 1.10/1.11 + MySQL 5.5/5.6/5.7(MariaDB 5.5/10.0/10.1) + PHP 5.5/5.6/7.0 + phpMyAdmin(Adminer) ( **Development** )
+CentOS 7 YUM Installation: Nginx 1.12/1.13 + MySQL 5.5/5.6/5.7/8.0(MariaDB 5.5/10.0/10.1/10.2/10.3) + PHP 5.4/5.5/5.6/7.0/7.1/7.2 + phpMyAdmin(Adminer) ( **Development** )
 
 ## 说明
 
