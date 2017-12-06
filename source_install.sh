@@ -166,6 +166,7 @@ function installOpenssl() {
   ./config --prefix=/usr/local/openssl -fPIC
   make -j "$cpuNum"
   make install
+  ln -sf /usr/local/openssl/bin/openssl /usr/bin/openssl
 }
 
 function installPhp {
@@ -348,6 +349,10 @@ clear
       installPackage 'php'
       installPackage 'nginx'
       cleanFiles
+      /usr/bin/openssl version
+      /usr/bin/php -v
+      /usr/bin/nginx -v
+      showNotice 'Install complete!'
     exit
     ;;
     2)
