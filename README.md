@@ -45,16 +45,16 @@ service vhost del [<domain>]
 
 参数说明
 
-> `start` 启动、重启
-> `stop` 停止
-> `add` 新增
-> `edit` 编辑
-> `del` 删除
-> `<domain>` 站点标识，默认：`domain`
-> `<server_name>` 域名列表，使用 `,` 隔开，默认：`domain.com,www.domain.com`
-> `<index_name>` 首页文件，依次生效，默认：`index.html,index.htm,index.php`
-> `<rewrite_file>` 伪静态规则文件，保存在 `/etc/nginx/rewrite/`，默认：`nomal.conf`
-> `<host_subdirectory>` 是否支持子目录绑定，`on` 或者 `off`，默认 `off`
+- `start` 启动、重启
+- `stop` 停止
+- `add` 新增
+- `edit` 编辑
+- `del` 删除
+- `<domain>` 站点标识，默认：`domain`
+- `<server_name>` 域名列表，使用 `,` 隔开，默认：`domain.com,www.domain.com`
+- `<index_name>` 首页文件，依次生效，默认：`index.html,index.htm,index.php`
+- `<rewrite_file>` 伪静态规则文件，保存在 `/etc/nginx/rewrite/`，默认：`nomal.conf`
+- `<host_subdirectory>` 是否支持子目录绑定，`on` 或者 `off`，默认 `off`
 
 示例
 
