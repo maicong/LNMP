@@ -3,28 +3,100 @@ CentOS 7 YUM 安装 LNMP 环境 (开发版)
 
 CentOS 7 YUM Installation: Nginx 1.12/1.13 + MySQL 5.5/5.6/5.7/8.0(MariaDB 5.5/10.0/10.1/10.2/10.3) + PHP 5.4/5.5/5.6/7.0/7.1/7.2 + phpMyAdmin(Adminer) ( **Development** )
 
-## 说明
-
-此分支为 LNMP 项目开发版，主要用于新功能的测试和 BUG 的修复。
-
-## 安装
+### 安装
 
 ```bash
-## 确保 wget 命令已经安装，已安装请忽略此步
-yum install wget -y
-
-## 执行安装脚本
-sh -c "$(wget https://cdn.rawgit.com/maicong/LNMP/dev/lnmp.sh -O -)"
-
-# 如果想保存安装日志，请将 log 输出到指定文件
-# sh -c "$(wget https://cdn.rawgit.com/maicong/LNMP/dev/lnmp.sh -O -)" 2>&1 | tee lnmp.log
+sh -c "$(curl -fsSL https://cdn.rawgit.com/maicong/LNMP/master/lnmp.sh)"
 ```
 
-## 帮助
-除安装命令不同外，其他操作方法和说明事项请查看 [README](https://github.com/maicong/LNMP/blob/master/README.md)。
+### 使用
 
-如果有新的差异操作，这里会具体说明。
+**1. 服务管理**
 
-## 协议
+```bash
+# MySQL
+systemctl {start,stop,status,restart} mysqld.service
+
+# MariaDB
+systemctl {start,stop,status,restart} mariadb.service
+
+# PHP
+systemctl {start,stop,status,restart} php-fpm.service
+
+# Nginx
+systemctl {start,stop,status,restart,reload} nginx.service
+```
+
+**2. 站点管理**
+
+```bash
+# 列表
+service vhost list
+
+# 启动(重启)、停止
+service vhost {start,stop} [<domain>]
+
+# 新增、编辑
+service vhost {add, edit} [<domain>] [<server_name>] [<index_name>] [<rewrite_file>] [<host_subdirectory>]
+
+# 删除
+service vhost del [<domain>]
+```
+
+参数说明
+
+> `start` 启动、重启
+> `stop` 停止
+> `add` 新增
+> `edit` 编辑
+> `del` 删除
+> `<domain>` 站点标识，默认：`domain`
+> `<server_name>` 域名列表，使用 `,` 隔开，默认：`domain.com,www.domain.com`
+> `<index_name>` 首页文件，依次生效，默认：`index.html,index.htm,index.php`
+> `<rewrite_file>` 伪静态规则文件，保存在 `/etc/nginx/rewrite/`，默认：`nomal.conf`
+> `<host_subdirectory>` 是否支持子目录绑定，`on` 或者 `off`，默认 `off`
+
+示例
+
+```bash
+# 启动或重启所有站点
+service vhost start
+
+# 停止所有站点
+service vhost stop
+
+# 列出所有站点
+service vhost list
+
+# 添加一个标识为 `mysite`，域名为 `mysite.com` 的站点
+service vhost add mysite mysite.com
+
+# 启动或重启标识为 `mysite` 的站点
+service vhost start mysite
+
+# 停止标识为 `mysite` 的站点
+service vhost stop mysite
+
+# 编辑标识为 `mysite` 的站点
+service vhost edit mysite
+
+# 删除标识为 `mysite` 的站点
+service vhost del mysite
+```
+
+**3. 备份**
+
+```bash
+# 新建一个备份
+service vbackup start
+
+# 删除一个备份
+service vbackup del [<file>.tar.gz]
+
+# 列出所有备份
+service vbackup list
+```
+
+### 协议
 
 The MIT License (MIT)
