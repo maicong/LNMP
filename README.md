@@ -6,7 +6,7 @@ CentOS 7 YUM Installation: Nginx 1.12/1.13 + MySQL 5.5/5.6/5.7/8.0(MariaDB 5.5/1
 ### 安装
 
 ```bash
-sh -c "$(curl -fsSL https://cdn.rawgit.com/maicong/LNMP/master/lnmp.sh)"
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/maicong/LNMP/dev/lnmp.sh)"
 ```
 
 ### 使用
