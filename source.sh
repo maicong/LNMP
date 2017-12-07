@@ -3,6 +3,10 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 clear
 
+# 检查 root 权限
+[[ $(id -g) != '0' ]] && die 'Script must be run as root.'
+
+# 声明变量
 libiconvVersion='libiconv-1.15'
 libgdVersion='libgd-2.2.5'
 pcreVersion='pcre-8.41'
@@ -13,10 +17,12 @@ nginxVersion='nginx-1.13.7'
 
 cpuNum=$(grep -c 'processor' < /proc/cpuinfo)
 
+# 输出提示信息
 function showNotice() {
   echo -e "\n\033[36m[NOTICE]\033[0m $1"
 }
 
+# 安装前检查
 function installReady() {
   showNotice "Install packages ..."
   if [ "$(rpm -qa epel-release | wc -l)" == "0" ]
@@ -32,6 +38,7 @@ function installReady() {
   useradd -m -s /sbin/nologin -g www www
 }
 
+# 安装软件包
 function installPackage() {
   if [ ! -d "/usr/local/$1" ]
   then
@@ -44,6 +51,7 @@ function installPackage() {
   fi
 }
 
+# 更新软件包
 function upgradePackage() {
   if [ -d "/usr/local/$1" ]
   then
@@ -56,6 +64,7 @@ function upgradePackage() {
   fi
 }
 
+# 安装 Libiconv
 function installLibiconv() {
   cd /tmp || exit
 
@@ -76,6 +85,7 @@ function installLibiconv() {
   ldconfig
 }
 
+# 安装 Pcre
 function installPcre() {
   cd /tmp || exit
 
@@ -100,6 +110,7 @@ function installPcre() {
   ldconfig
 }
 
+# 安装 Zlib
 function installZlib() {
   cd /tmp || exit
 
@@ -120,6 +131,7 @@ function installZlib() {
   ldconfig
 }
 
+# 安装 Libgd
 function installLibgd() {
   cd /tmp || exit
 
@@ -150,6 +162,7 @@ function installLibgd() {
   ldconfig
 }
 
+# 安装 OpenSSL
 function installOpenssl() {
   cd /tmp || exit
 
@@ -169,6 +182,7 @@ function installOpenssl() {
   ln -sf /usr/local/openssl/bin/openssl /usr/bin/openssl
 }
 
+# 安装 PHP
 function installPhp {
   cd /tmp || exit
 
@@ -246,6 +260,7 @@ function installPhp {
   cp -v php.ini-production /etc/php/php.ini
 }
 
+# 安装 Nginx
 function installNginx() {
   cd /tmp || exit
 
@@ -310,6 +325,7 @@ function installNginx() {
   ln -sf /usr/local/nginx/sbin/nginx /usr/bin/nginx
 }
 
+# 清理安装文件
 function cleanFiles() {
   showNotice "Clean files ..."
   rm -rfv /tmp/${libiconvVersion}*
@@ -340,6 +356,7 @@ clear
   read -p 'Select an option [1-4]: ' -r -e operation
   case $operation in
     1)
+      clear
       installReady
       installPackage 'libiconv'
       installPackage 'pcre'
@@ -356,6 +373,7 @@ clear
     exit
     ;;
     2)
+      clear
       rm -rfv /etc/ld.so.conf.d/custom-libs.conf
       rm -rfv /usr/local/libiconv
       rm -rfv /usr/local/pcre
@@ -376,6 +394,7 @@ clear
     exit
     ;;
     3)
+      clear
       showNotice "Checking, please wait..."
       yum upgrade
       if [ -f /etc/ld.so.conf.d/custom-libs.conf ]
@@ -394,6 +413,7 @@ clear
     ;;
     4)
       showNotice "Nothing to do..."
-    exit;;
+    exit
+    ;;
   esac
 done
