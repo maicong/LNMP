@@ -1,17 +1,44 @@
-CentOS 7 YUM 安装 LNMP 环境 (开发版)
+CentOS 7 安装 LNMP 环境 (开发版)
 =======
 
-CentOS 7 YUM Installation: Nginx 1.12/1.13 + MySQL 5.5/5.6/5.7/8.0(MariaDB 5.5/10.0/10.1/10.2/10.3) + PHP 5.4/5.5/5.6/7.0/7.1/7.2 + phpMyAdmin(Adminer) ( **Development** )
+### 可供安装的版本
+
+yum 源方式:
+
+```
+Nginx 1.12/1.13
+MySQL 5.5/5.6/5.7/8.0
+MariaDB 5.5/10.0/10.1/10.2/10.3
+PHP 5.4/5.5/5.6/7.0/7.1/7.2
+phpMyAdmin
+Adminer
+```
+
+源码编译方式:
+
+```
+OpenSSL 1.1.0f
+Nginx 1.13.7
+PHP 7.2.0
+```
 
 ### 安装
+
+使用 yum 源安装:
 
 ```bash
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/maicong/LNMP/dev/lnmp.sh)"
 ```
 
+使用源码编译安装:
+
+```bash
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/maicong/LNMP/dev/source.sh)"
+```
+
 ### 使用
 
-**1. 服务管理**
+**服务管理**
 
 ```bash
 # MySQL
@@ -27,7 +54,7 @@ systemctl {start,stop,status,restart} php-fpm.service
 systemctl {start,stop,status,restart,reload} nginx.service
 ```
 
-**2. 站点管理**
+**站点管理**
 
 ```bash
 # 列表
@@ -84,7 +111,7 @@ service vhost edit mysite
 service vhost del mysite
 ```
 
-**3. 备份**
+**备份**
 
 ```bash
 # 新建一个备份
