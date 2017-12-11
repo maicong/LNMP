@@ -18,7 +18,7 @@ showError(){
 }
 
 showNotice(){
-    echo -e "\033[36m[Notice]\033[0m $1";
+    echo -e "\033[36m[NOTICE]\033[0m $1";
 }
 
 
