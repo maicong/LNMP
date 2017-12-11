@@ -19,7 +19,7 @@ cpuNum=$(grep -c 'processor' < /proc/cpuinfo)
 
 # 输出提示信息
 function showNotice() {
-  echo -e "\n\033[36m[NOTICE]\033[0m $1"
+  echo -e "\\n\\033[36m[NOTICE]\\033[0m $1"
 }
 
 # 安装前检查
