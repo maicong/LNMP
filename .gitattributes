@@ -1,4 +1,2 @@
-*.css linguist-language=shell
-*.js linguist-language=shell
-*.html linguist-language=shell
-*.php linguist-language=shell
+DBMGT/* linguist-vendored
+home/* linguist-vendored
