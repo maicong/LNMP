@@ -19,7 +19,7 @@
 # 声明变量
 envType='master'
 ipAddress=$(ip addr | grep -E -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | grep -E -v "^192\\.168|^172\\.1[6-9]\\.|^172\\.2[0-9]\\.|^172\\.3[0-2]\\.|^10\\.|^127\\.|^255\\." | head -n 1) || '0.0.0.0'
-mysqlPWD=$(echo -n ${RANDOM} | md5sum | sed "s/ .*//" | cut -b -8)
+mysqlPWD=$(echo -n ${RANDOM} | md5sum | cut -b -16)
 
 mysqlUrl='https://repo.mysql.com'
 mariaDBUrl='https://yum.mariadb.org'
@@ -469,7 +469,7 @@ clear
   echo '| |___    | |\  |    | |  | |    |  __/ '
   echo '|_____|   |_| \_|    |_|  |_|    |_|    '
   echo ''
-  echo -e 'For more details see \033[4mhttps://git.io/lnmp\033[0m'
+  echo -e "For more details see \033[4mhttps://git.io/lnmp\033[0m"
   echo ''
   showNotice 'Please select your operation:'
   echo '1) Install'
