@@ -13,10 +13,10 @@
 # Usage: sh lnmp.sh
 #
 
-# 检查 root 权限
+# check root
 [ "$(id -g)" != '0' ] && die 'Script must be run as root.'
 
-# 声明变量
+# declare variables
 envType='master'
 ipAddress=$(ip addr | grep -E -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | grep -E -v "^192\\.168|^172\\.1[6-9]\\.|^172\\.2[0-9]\\.|^172\\.3[0-2]\\.|^10\\.|^127\\.|^255\\." | head -n 1) || '0.0.0.0'
 mysqlPWD=$(echo -n ${RANDOM} | md5sum | cut -b -16)
@@ -30,22 +30,22 @@ mariaDBUrl_CN='https://mirrors.ustc.edu.cn/mariadb/yum'
 phpUrl_CN='https://mirrors.ustc.edu.cn/remi'
 nginxUrl_CN='https://cdn-nginx.b0.upaiyun.com'
 
-# 输出正确信息
+# show success message
 showOk(){
   echo -e "\\033[34m[OK]\\033[0m $1"
 }
 
-# 输出错误信息
+# show error message
 showError(){
   echo -e "\\033[31m[ERROR]\\033[0m $1"
 }
 
-# 输出提示信息
+# show notice message
 showNotice(){
   echo -e "\\033[36m[NOTICE]\\033[0m $1"
 }
 
-# 安装
+# install
 runInstall(){
   showNotice 'Installing...'
 
@@ -334,7 +334,7 @@ runInstall(){
 
   if [[ "${phpV}" != '0' && "${nginxV}" != '0' ]]; then
     if [ "${dbV}" = "1" ]; then
-      cp -a /tmp/LNMP-${envType}/DBMGT/Adminer /home/wwwroot/index/
+      cp -a /tmp/LNMP-${envType}/DB/Adminer /home/wwwroot/index/
       sed -i "s/phpMyAdmin/Adminer/g" /home/wwwroot/index/index.html
     elif [ "${dbV}" = "2" ]; then
       yum install -y phpMyAdmin
@@ -432,7 +432,7 @@ runInstall(){
   fi
 }
 
-# 卸载
+# uninstall
 runUninstall(){
     read -p 'Are you sure? (y/n): ' -r -e confirmYN
     if [ "${confirmYN}" = 'y' ]; then
