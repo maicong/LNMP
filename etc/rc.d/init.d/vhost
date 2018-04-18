@@ -40,7 +40,7 @@ www_root=/home/wwwroot;
 php_fpm_BIN=/usr/sbin/php-fpm;
 php_fpm_EDIR=/etc/php-fpm.d;
 php_fpm_SDIR=/etc/php-fpm.d.stop;
-php_default_PID=/run/php-fpm/php-fpm.pid;
+php_default_PID=/var/run/php-fpm/php-fpm.pid;
 nginx_BIN=/usr/sbin/nginx;
 nginx_CONF=/etc/nginx/nginx.conf;
 nginx_EDIR=/etc/nginx/conf.d;
@@ -48,7 +48,7 @@ nginx_SDIR=/etc/nginx/conf.d.stop;
 nginx_PID=/var/run/nginx.pid;
 
 if [ "$domain" != '' ]; then
-    php_fpm_PID=/run/php-fpm/php-fpm-${domain}.pid;
+    php_fpm_PID=/var/run/php-fpm/php-fpm-${domain}.pid;
     php_fpm_SOCK=/dev/shm/php-fpm-${domain}.sock;
     php_fpm_ECONF=${php_fpm_EDIR}/php-${domain}.conf;
     php_fpm_SCONF=${php_fpm_SDIR}/php-${domain}.conf;
