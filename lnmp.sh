@@ -47,6 +47,18 @@ showNotice(){
 
 # install
 runInstall(){
+
+  showNotice 'Update...'
+
+  while true; do
+    read -p "Update YUM packages? [Y/n]" yn
+    case $yn in
+      [Yy]* ) yum update -y; break;;
+      [Nn]* ) exit;;
+      * ) echo "Please answer yes or no.";;
+    esac
+  done
+
   showNotice 'Installing...'
 
   showNotice '(Step 1/6) Input server IPv4 Address'
