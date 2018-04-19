@@ -38,7 +38,7 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/maicong/LNMP/master/source
 
 ### 使用
 
-** 服务管理 **
+**服务管理**
 
 ```bash
 # MySQL
@@ -54,7 +54,7 @@ systemctl {start,stop,status,restart} php-fpm.service
 systemctl {start,stop,status,restart,reload} nginx.service
 ```
 
-** 站点管理 **
+**站点管理**
 
 ```bash
 # 列表
@@ -111,7 +111,7 @@ service vhost edit mysite
 service vhost del mysite
 ```
 
-** 备份 **
+**备份**
 
 ```bash
 # 新建一个备份
