@@ -29,6 +29,7 @@ mysqlUrl_CN='https://mirrors.ustc.edu.cn/mysql-repo'
 mariaDBUrl_CN='https://mirrors.ustc.edu.cn/mariadb/yum'
 phpUrl_CN='https://mirrors.ustc.edu.cn/remi'
 nginxUrl_CN='https://cdn-nginx.b0.upaiyun.com'
+isUpdate='0'
 
 # show success message
 showOk(){
@@ -47,28 +48,26 @@ showNotice(){
 
 # install
 runInstall(){
+  showNotice 'Installing...'
 
-  showNotice 'Update...'
+  showNotice '(Step 1/7) Update YUM packages'
 
   while true; do
-    read -p "Update YUM packages? [Y/n]" yn
+    read -p "Please answer yes or no. [Y/n]" yn
     case $yn in
-      [Yy]* ) yum update -y; break;;
-      [Nn]* ) exit;;
-      * ) echo "Please answer yes or no.";;
+      [Yy]* ) isUpdate='1'; break;;
+      [Nn]* ) isUpdate='0'; break;;
     esac
   done
 
-  showNotice 'Installing...'
-
-  showNotice '(Step 1/6) Input server IPv4 Address'
+  showNotice '(Step 2/7) Input server IPv4 Address'
   read -p "IP address: " -r -e -i "${ipAddress}" ipAddress
   if [ "${ipAddress}" = '' ]; then
     showError 'Invalid IP Address'
     exit
   fi
 
-  showNotice "(Step 2/6) Select the MySQL version"
+  showNotice "(Step 3/7) Select the MySQL version"
   echo "1) MariaDB-5.5"
   echo "2) MariaDB-10.0"
   echo "3) MariaDB-10.1"
@@ -85,7 +84,7 @@ runInstall(){
     exit
   fi
 
-  showNotice "(Step 3/6) Select the PHP version"
+  showNotice "(Step 4/7) Select the PHP version"
   echo "1) PHP-5.4"
   echo "2) PHP-5.5"
   echo "3) PHP-5.6"
@@ -99,7 +98,7 @@ runInstall(){
     exit
   fi
 
-  showNotice "(Step 4/6) Select the Nginx version"
+  showNotice "(Step 5/7) Select the Nginx version"
   echo "1) Nginx-1.12"
   echo "2) Nginx-1.13"
   echo "0) Not need"
@@ -109,7 +108,7 @@ runInstall(){
     exit
   fi
 
-  showNotice "(Step 5/6) Select the DB tool version"
+  showNotice "(Step 6/7) Select the DB tool version"
   echo "1) Adminer"
   echo "2) phpMyAdmin"
   echo "0) Not need"
@@ -119,7 +118,7 @@ runInstall(){
     exit
   fi
 
-  showNotice "(Step 6/6) Use a mirror server to download rpms"
+  showNotice "(Step 7/7) Use a mirror server to download rpms"
   echo "1) Source station"
   echo "2) Mirror station"
   read -p 'Proxy server [1-2]: ' -r -e -i 1 freeV
@@ -128,6 +127,7 @@ runInstall(){
     exit
   fi
 
+  [ "${isUpdate}" = '1' ] && yum update -y
   [ ! -x "/usr/bin/curl" ] && yum install curl -y
   [ ! -x "/usr/bin/unzip" ] && yum install unzip -y
 
