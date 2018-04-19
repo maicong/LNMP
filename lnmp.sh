@@ -364,6 +364,8 @@ runInstall(){
   chmod +x /etc/rc.d/init.d/vbackup
   chmod +x /etc/rc.d/init.d/vhost
 
+  [ ! -d "/var/run/php-fpm" ] && mkdir -p /var/run/php-fpm
+
   showNotice "Start service"
 
   systemctl enable firewalld.service
@@ -412,12 +414,10 @@ runInstall(){
       echo -e "\\033[34m WebSite: \\033[0m http://${ipAddress}"
       echo -e "\\033[34m WebDir: \\033[0m /home/wwwroot/"
       echo -e "\\033[34m Nginx: \\033[0m /etc/nginx/"
-      /usr/sbin/nginx -v
     fi
 
     if [ "${phpV}" != '0' ]; then
       echo -e "\\033[34m PHP: \\033[0m /etc/php-fpm.d/"
-      /usr/sbin/php-fpm -v
     fi
 
     if [[ "${mysqlV}" != '0' && -f "/usr/sbin/mysqld" ]]; then
@@ -430,7 +430,6 @@ runInstall(){
         echo -e "\\033[34m MySQL User: \\033[0m root"
         echo -e "\\033[34m MySQL Password: \\033[0m ${mysqlPWD}"
       fi
-      /usr/sbin/mysqld -V
     fi
 
     echo "Start time: ${startDate}"
