@@ -308,6 +308,7 @@ runInstall(){
     yum install -y php php-bcmath php-fpm php-gd php-json php-mbstring php-mcrypt php-mysqlnd php-opcache php-pdo php-pecl-crypto php-pecl-mcrypt php-pecl-geoip php-pecl-zip php-recode php-snmp php-soap php-xml
 
     mkdir -p /etc/php-fpm.d.stop
+    mkdir -p /var/run/php-fpm
 
     if [ -d "/etc/php-fpm.d/" ]; then
       mv -bfu /etc/php-fpm.d/* /etc/php-fpm.d.stop/
@@ -363,8 +364,6 @@ runInstall(){
 
   chmod +x /etc/rc.d/init.d/vbackup
   chmod +x /etc/rc.d/init.d/vhost
-
-  [ ! -d "/var/run/php-fpm" ] && mkdir -p /var/run/php-fpm
 
   showNotice "Start service"
 
