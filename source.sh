@@ -11,9 +11,9 @@ libiconvVersion='libiconv-1.15'
 libgdVersion='libgd-2.2.5'
 pcreVersion='pcre-8.41'
 zlibVersion='zlib-1.2.11'
-opensslVersion='openssl-1.1.0f'
-phpVersion='php-7.2.0'
-nginxVersion='nginx-1.13.7'
+opensslVersion='openssl-1.1.0h'
+phpVersion='php-7.2.4'
+nginxVersion='nginx-1.14.0'
 
 cpuNum=$(grep -c 'processor' < /proc/cpuinfo)
 
